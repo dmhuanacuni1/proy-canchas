@@ -1,0 +1,11 @@
+# Entorno virtual
+Lib/
+Scripts/
+Include/
+pyvenv.cfg
+__pycache__/
+*.pyc
+
+# Configuracion local (cada quien con su contrasena)
+.env
+.env.local

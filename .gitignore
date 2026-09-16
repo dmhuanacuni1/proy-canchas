@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+Lib/
+Scripts/
+Include/
+pyvenv.cfg
+
+# Entorno local (credenciales)
+.env
+.env.local
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
