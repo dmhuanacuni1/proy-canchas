@@ -1,47 +1,21 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import "./App.css";
-
-interface Cancha {
-  id: number;
-  nombre: string;
-  deporte: string;
-  precio_hora: number;
-  techada: boolean;
-  estado: string;
-}
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import CanchasPage from './pages/CanchasPage';
+import MisReservasPage from './pages/MisReservasPage';
+import ReservaFormPage from './pages/ReservaFormPage';
 
 function App() {
-  const [canchas, setCanchas] = useState<Cancha[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    axios
-      .get<Cancha[]>("http://127.0.0.1:5000/api/canchas")
-      .then((res) => setCanchas(res.data))
-      .catch(() =>
-        setError("No se pudo conectar con el backend. ¿Está corriendo flask run?")
-      )
-      .finally(() => setCargando(false));
-  }, []);
-
-  if (cargando) return <p>Cargando canchas...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
-
   return (
-    <div>
-      <h1>Canchas disponibles</h1>
-      <ul>
-        {canchas.map((c) => (
-          <li key={c.id}>
-            {c.nombre} — {c.deporte} — Bs {c.precio_hora}/hora
-            {c.techada ? " (techada)" : ""} — {c.estado}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <BrowserRouter>
+      <nav style={{ padding: '10px', background: '#eee' }}>
+        <Link to="/" style={{ marginRight: '10px' }}>Canchas</Link>
+        <Link to="/mis-reservas">Mis Reservas</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<CanchasPage />} />
+        <Route path="/reservar/:idCancha" element={<ReservaFormPage />} />
+        <Route path="/mis-reservas" element={<MisReservasPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
 export default App;
