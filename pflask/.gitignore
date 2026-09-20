@@ -9,3 +9,5 @@ __pycache__/
 # Configuracion local (cada quien con su contrasena)
 .env
 .env.local
+config/correo.env
+auth/config/correo.env

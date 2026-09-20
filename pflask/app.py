@@ -1,8 +1,9 @@
 import os
 from flask import Flask, jsonify, render_template
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from dotenv import load_dotenv
+
+from extensions import db
 
 load_dotenv()
 
@@ -10,7 +11,7 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+db.init_app(app)
 CORS(app)
 
 
@@ -40,6 +41,11 @@ def get_canchas():
         "techada": c.techada,
         "estado": c.estado
     } for c in canchas])
+
+
+# Ver auth/LEEME.txt
+from auth import register_auth
+register_auth(app)
 
 
 if __name__ == "__main__":

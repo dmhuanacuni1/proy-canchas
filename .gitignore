@@ -10,6 +10,8 @@ pyvenv.cfg
 # Entorno local (credenciales)
 .env
 .env.local
+pflask/config/correo.env
+pflask/auth/config/correo.env
 
 # Node
 node_modules/

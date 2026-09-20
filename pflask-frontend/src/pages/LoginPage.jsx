@@ -8,7 +8,7 @@ import { authService } from '../services/authService';
 
 // 1. Definimos las reglas de validación (Yup)
 const schema = yup.object().shape({
-  email: yup.string().email('Debe ser un correo válido').required('El correo es obligatorio'),
+  email: yup.string().required('El correo o usuario es obligatorio'),
   password: yup.string().required('La contraseña es obligatoria')
 });
 
@@ -39,7 +39,13 @@ const LoginPage = () => {
         navigate('/dashboard');
       }
     } catch (error) {
-      setErrorMsg('Credenciales incorrectas o error de conexión');
+      if (!error.response) {
+        setErrorMsg('No se pudo conectar con el servidor. ¿Está Flask corriendo en el puerto 5000?');
+      } else if (error.response.status === 401) {
+        setErrorMsg(error.response.data?.error || 'Credenciales incorrectas');
+      } else {
+        setErrorMsg(error.response.data?.error || 'Error al iniciar sesión');
+      }
     }
   };
 
@@ -52,10 +58,10 @@ const LoginPage = () => {
       
       <form onSubmit={handleSubmit(onSubmit)}>
         <div style={{ marginBottom: '15px' }}>
-          <label>Correo Electrónico:</label><br />
+          <label>Correo o usuario:</label><br />
           <input 
-            type="email" 
-            {...register('email')} // Conectamos el input con React Hook Form
+            type="text" 
+            {...register('email')}
             style={{ width: '95%', padding: '8px', marginTop: '5px' }} 
           />
           {/* Mensaje de error de validación */}

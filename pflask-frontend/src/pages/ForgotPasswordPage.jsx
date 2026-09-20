@@ -28,7 +28,11 @@ const ForgotPasswordPage = () => {
       // Mensaje genérico por seguridad (no confirmar si el correo existe o no)
       setMessage('Si el correo está registrado, recibirás un enlace de recuperación pronto.');
     } catch (error) {
-      setErrorMsg('Error de conexión con el servidor. Inténtalo más tarde.');
+      if (!error.response) {
+        setErrorMsg('Error de conexión con el servidor. Inténtalo más tarde.');
+      } else {
+        setErrorMsg(error.response.data?.error || 'No se pudo enviar el correo de recuperación.');
+      }
     }
   };
 
