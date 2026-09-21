@@ -55,18 +55,6 @@ interface Bloqueo {
   estado: string;
 }
 
-interface AuditoriaItem {
-  id_auditoria: number;
-  id_usuario: number | null;
-  username: string;
-  rol: string;
-  accion: string;
-  tabla_afectada: string | null;
-  id_registro: number | null;
-  detalle: string;
-  fecha: string;
-}
-
 interface Categoria {
   id_categoria: number;
   nombre: string;
@@ -95,7 +83,6 @@ function App() {
   // REFS para scroll automático
   const gestionCanchasRef = useRef<HTMLDivElement>(null);
   const gestionCategoriasRef = useRef<HTMLDivElement>(null);
-  const auditoriaRef = useRef<HTMLDivElement>(null);
   const bloqueosRef = useRef<HTMLDivElement>(null);
 
   // LOGIN
@@ -124,16 +111,8 @@ function App() {
     tipo: "success" | "error" | "info";
   } | null>(null);
   const [reservas, setReservas] = useState<Reserva[]>([]);
-  const [filtroReservas, setFiltroReservas] = useState<"todas" | "vigentes">(
-    "todas"
-  );
-  const [reservaModificando, setReservaModificando] = useState<Reserva | null>(
-    null
-  );
+  const [filtroReservas, setFiltroReservas] = useState<"todas" | "vigentes">("todas");
   const [reservaPagando, setReservaPagando] = useState<Reserva | null>(null);
-  const [modFecha, setModFecha] = useState("");
-  const [modHora, setModHora] = useState("");
-  const [modDuracion, setModDuracion] = useState("1");
   const [metodoPago, setMetodoPago] = useState("efectivo");
 
   // EMPLEADO / ADMIN
@@ -141,19 +120,17 @@ function App() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [filtroFecha, setFiltroFecha] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
-  const [reservaCancelandoAdmin, setReservaCancelandoAdmin] =
-    useState<ReservaAdmin | null>(null);
+  const [reservaCancelandoAdmin, setReservaCancelandoAdmin] = useState<ReservaAdmin | null>(null);
   const [motivoCancelacion, setMotivoCancelacion] = useState("");
 
   // MODIFICAR RESERVA DESDE ADMIN/EMPLEADO
-  const [reservaModificandoAdmin, setReservaModificandoAdmin] =
-    useState<ReservaAdmin | null>(null);
+  const [reservaModificandoAdmin, setReservaModificandoAdmin] = useState<ReservaAdmin | null>(null);
   const [modAdminFecha, setModAdminFecha] = useState("");
   const [modAdminHora, setModAdminHora] = useState("");
   const [modAdminDuracion, setModAdminDuracion] = useState("1");
   const [modAdminIdCancha, setModAdminIdCancha] = useState("");
 
-  // RF-11
+  // RF-10 (Presencial)
   const [modalReservaPresencial, setModalReservaPresencial] = useState(false);
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [presIdCliente, setPresIdCliente] = useState("");
@@ -195,14 +172,6 @@ function App() {
     tipo: "success" | "error" | "info";
   } | null>(null);
 
-  // AUDITORÍA
-  const [auditoria, setAuditoria] = useState<AuditoriaItem[]>([]);
-  const [auditoriaAcciones, setAuditoriaAcciones] = useState<string[]>([]);
-  const [filtroAudFecha, setFiltroAudFecha] = useState("");
-  const [filtroAudAccion, setFiltroAudAccion] = useState("");
-  const [filtroAudUsername, setFiltroAudUsername] = useState("");
-  const [verAuditoria, setVerAuditoria] = useState(false);
-
   // GESTIÓN CANCHAS
   const [verGestionCanchas, setVerGestionCanchas] = useState(false);
   const [modalCancha, setModalCancha] = useState(false);
@@ -232,46 +201,19 @@ function App() {
   } | null>(null);
 
   // ============================================================
-  // SCROLL AUTOMÁTICO AL ABRIR SECCIONES
+  // SCROLL AUTOMÁTICO
   // ============================================================
   useEffect(() => {
     if (verGestionCanchas && gestionCanchasRef.current) {
-      setTimeout(
-        () =>
-          gestionCanchasRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          }),
-        150
-      );
+      setTimeout(() => gestionCanchasRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
     }
   }, [verGestionCanchas]);
 
   useEffect(() => {
     if (verGestionCategorias && gestionCategoriasRef.current) {
-      setTimeout(
-        () =>
-          gestionCategoriasRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          }),
-        150
-      );
+      setTimeout(() => gestionCategoriasRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
     }
   }, [verGestionCategorias]);
-
-  useEffect(() => {
-    if (verAuditoria && auditoriaRef.current) {
-      setTimeout(
-        () =>
-          auditoriaRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          }),
-        150
-      );
-    }
-  }, [verAuditoria]);
 
   // ============================================================
   // INTERCEPTOR
@@ -292,40 +234,31 @@ function App() {
   // CARGA INICIAL
   // ============================================================
   const cargarCanchas = () => {
-    axios
-      .get<Cancha[]>("http://127.0.0.1:5000/api/canchas")
+    axios.get<Cancha[]>("http://127.0.0.1:5000/api/canchas")
       .then((res) => setCanchas(res.data))
       .catch(() => setError("No se pudo conectar con el backend."));
   };
 
   const cargarCategorias = () => {
-    axios
-      .get<Categoria[]>("http://127.0.0.1:5000/api/categorias")
+    axios.get<Categoria[]>("http://127.0.0.1:5000/api/categorias")
       .then((res) => setCategorias(res.data))
       .catch((err) => console.error(err));
   };
 
   useEffect(() => {
-    axios
-      .get<Cancha[]>("http://127.0.0.1:5000/api/canchas")
+    axios.get<Cancha[]>("http://127.0.0.1:5000/api/canchas")
       .then((res) => setCanchas(res.data))
-      .catch(() =>
-        setError(
-          "No se pudo conectar con el backend. ¿Está corriendo flask run?"
-        )
-      )
+      .catch(() => setError("No se pudo conectar con el backend. ¿Está corriendo flask run?"))
       .finally(() => setCargando(false));
     cargarCategorias();
   }, []);
 
   const cargarReservas = (filtro: "todas" | "vigentes" = filtroReservas) => {
     if (!usuario || usuario.rol !== "cliente" || !usuario.id_cliente) return;
-    const url =
-      filtro === "vigentes"
+    const url = filtro === "vigentes"
         ? `http://127.0.0.1:5000/api/reservas/${usuario.id_cliente}/vigentes`
         : `http://127.0.0.1:5000/api/reservas/${usuario.id_cliente}`;
-    axios
-      .get<Reserva[]>(url)
+    axios.get<Reserva[]>(url)
       .then((res) => setReservas(res.data))
       .catch((err) => console.error(err));
   };
@@ -338,46 +271,20 @@ function App() {
     const params = new URLSearchParams();
     if (filtroFecha) params.append("fecha", filtroFecha);
     if (filtroEstado) params.append("estado", filtroEstado);
-    axios
-      .get<ReservaAdmin[]>(
-        `http://127.0.0.1:5000/api/admin/reservas?${params.toString()}`
-      )
+    axios.get<ReservaAdmin[]>(`http://127.0.0.1:5000/api/admin/reservas?${params.toString()}`)
       .then((res) => setReservasAdmin(res.data))
       .catch((err) => console.error(err));
   };
 
   const cargarClientes = () => {
-    axios
-      .get<Cliente[]>("http://127.0.0.1:5000/api/clientes")
+    axios.get<Cliente[]>("http://127.0.0.1:5000/api/clientes")
       .then((res) => setClientes(res.data))
       .catch((err) => console.error(err));
   };
 
   const cargarBloqueos = () => {
-    axios
-      .get<Bloqueo[]>("http://127.0.0.1:5000/api/bloqueos")
+    axios.get<Bloqueo[]>("http://127.0.0.1:5000/api/bloqueos")
       .then((res) => setBloqueos(res.data))
-      .catch((err) => console.error(err));
-  };
-
-  const cargarAuditoria = () => {
-    const params = new URLSearchParams();
-    if (filtroAudFecha) params.append("fecha", filtroAudFecha);
-    if (filtroAudAccion) params.append("accion", filtroAudAccion);
-    if (filtroAudUsername) params.append("username", filtroAudUsername);
-    params.append("limite", "300");
-    axios
-      .get<AuditoriaItem[]>(
-        `http://127.0.0.1:5000/api/admin/auditoria?${params.toString()}`
-      )
-      .then((res) => setAuditoria(res.data))
-      .catch((err) => console.error(err));
-  };
-
-  const cargarAccionesAuditoria = () => {
-    axios
-      .get<string[]>("http://127.0.0.1:5000/api/admin/auditoria/acciones")
-      .then((res) => setAuditoriaAcciones(res.data))
       .catch((err) => console.error(err));
   };
 
@@ -388,19 +295,8 @@ function App() {
     }
     if (usuario?.rol === "administrador") {
       cargarBloqueos();
-      cargarAccionesAuditoria();
     }
   }, [usuario, filtroFecha, filtroEstado]);
-
-  useEffect(() => {
-    if (usuario?.rol === "administrador" && verAuditoria) cargarAuditoria();
-  }, [
-    usuario,
-    verAuditoria,
-    filtroAudFecha,
-    filtroAudAccion,
-    filtroAudUsername,
-  ]);
 
   // ============================================================
   // LOGIN
@@ -411,17 +307,13 @@ function App() {
     setLoginCargando(true);
     try {
       const res = await axios.post("http://127.0.0.1:5000/api/login", {
-        username: loginUsername,
-        contrasena: loginPassword,
+        username: loginUsername, contrasena: loginPassword,
       });
       localStorage.setItem("usuario", JSON.stringify(res.data));
       setUsuario(res.data);
-      setLoginUsername("");
-      setLoginPassword("");
+      setLoginUsername(""); setLoginPassword("");
     } catch (err: any) {
-      setLoginError(
-        err.response?.data?.error || "Error de conexión con el servidor."
-      );
+      setLoginError(err.response?.data?.error || "Error de conexión con el servidor.");
     } finally {
       setLoginCargando(false);
     }
@@ -430,17 +322,10 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem("usuario");
     setUsuario(null);
-    setReservas([]);
-    setReservasAdmin([]);
-    setBloqueos([]);
-    setAuditoria([]);
-    setMensajeReserva(null);
-    setFiltroReservas("todas");
-    setFiltroFecha("");
-    setFiltroEstado("");
-    setVerAuditoria(false);
-    setVerGestionCanchas(false);
-    setVerGestionCategorias(false);
+    setReservas([]); setReservasAdmin([]); setBloqueos([]);
+    setMensajeReserva(null); setFiltroReservas("todas");
+    setFiltroFecha(""); setFiltroEstado("");
+    setVerGestionCanchas(false); setVerGestionCategorias(false);
   };
 
   const handleReserva = async (e: any) => {
@@ -450,11 +335,8 @@ function App() {
 
     try {
       const response = await axios.post("http://127.0.0.1:5000/api/reservas", {
-        id_cancha: parseInt(idCancha),
-        id_cliente: usuario.id_cliente,
-        fecha_reserva: fecha,
-        hora_inicio: hora,
-        duracion: parseFloat(duracion),
+        id_cancha: parseInt(idCancha), id_cliente: usuario.id_cliente,
+        fecha_reserva: fecha, hora_inicio: hora, duracion: parseFloat(duracion),
       });
       setMensajeReserva({
         texto: `✅ ${response.data.mensaje} Monto a pagar: Bs ${response.data.monto_total}.`,
@@ -462,9 +344,7 @@ function App() {
       });
       cargarReservas();
     } catch (err: any) {
-      const msg =
-        err.response?.data?.error ||
-        (err.request ? "Error de red." : "Error inesperado.");
+      const msg = err.response?.data?.error || (err.request ? "Error de red." : "Error inesperado.");
       setMensajeReserva({ texto: `❌ ${msg}`, tipo: "error" });
     }
   };
@@ -472,9 +352,7 @@ function App() {
   const cancelarReserva = async (id: number) => {
     if (!confirm("¿Seguro que deseas cancelar esta reserva?")) return;
     try {
-      const r = await axios.put(
-        `http://127.0.0.1:5000/api/reservas/${id}/cancelar`
-      );
+      const r = await axios.put(`http://127.0.0.1:5000/api/reservas/${id}/cancelar`);
       alert(`✅ ${r.data.mensaje}`);
       cargarReservas();
     } catch (err: any) {
@@ -482,43 +360,13 @@ function App() {
     }
   };
 
-  const abrirModalModificar = (r: Reserva) => {
-    setReservaModificando(r);
-    setModFecha(r.fecha);
-    setModHora(r.hora_inicio);
-    setModDuracion("1");
-  };
-
-  const handleModificar = async (e: any) => {
-    e.preventDefault();
-    if (!reservaModificando) return;
-    try {
-      const r = await axios.put(
-        `http://127.0.0.1:5000/api/reservas/${reservaModificando.id_reserva}/modificar`,
-        {
-          fecha_reserva: modFecha,
-          hora_inicio: modHora,
-          duracion: parseFloat(modDuracion),
-        }
-      );
-      alert(`✅ ${r.data.mensaje}\nNuevo monto: Bs ${r.data.nuevo_monto}`);
-      setReservaModificando(null);
-      cargarReservas();
-    } catch (err: any) {
-      alert(`❌ ${err.response?.data?.error || "Error al modificar."}`);
-    }
-  };
-
   const handlePagar = async (e: any) => {
     e.preventDefault();
     if (!reservaPagando) return;
     try {
-      const r = await axios.post(
-        `http://127.0.0.1:5000/api/reservas/${reservaPagando.id_reserva}/pagar`,
-        {
-          metodo_pago: metodoPago,
-        }
-      );
+      const r = await axios.post(`http://127.0.0.1:5000/api/reservas/${reservaPagando.id_reserva}/pagar`, {
+        metodo_pago: metodoPago,
+      });
       alert(`✅ ${r.data.mensaje}\nMonto pagado: Bs ${r.data.monto_pagado}`);
       setReservaPagando(null);
       cargarReservas();
@@ -531,13 +379,9 @@ function App() {
     e.preventDefault();
     if (!reservaCancelandoAdmin) return;
     try {
-      const r = await axios.put(
-        `http://127.0.0.1:5000/api/admin/reservas/${reservaCancelandoAdmin.id_reserva}/cancelar-admin`,
-        { motivo: motivoCancelacion }
-      );
+      const r = await axios.put(`http://127.0.0.1:5000/api/admin/reservas/${reservaCancelandoAdmin.id_reserva}/cancelar-admin`, { motivo: motivoCancelacion });
       alert(`✅ ${r.data.mensaje}`);
-      setReservaCancelandoAdmin(null);
-      setMotivoCancelacion("");
+      setReservaCancelandoAdmin(null); setMotivoCancelacion("");
       cargarReservasAdmin();
     } catch (err: any) {
       alert(`❌ ${err.response?.data?.error || "Error al cancelar."}`);
@@ -547,28 +391,19 @@ function App() {
   // ---------- MODIFICAR RESERVA (ADMIN/EMPLEADO) ----------
   const abrirModalModificarAdmin = (r: ReservaAdmin) => {
     setReservaModificandoAdmin(r);
-    setModAdminFecha(r.fecha);
-    setModAdminHora(r.hora_inicio);
-    setModAdminDuracion("1");
-    setModAdminIdCancha(String(r.id_cancha));
+    setModAdminFecha(r.fecha); setModAdminHora(r.hora_inicio);
+    setModAdminDuracion("1"); setModAdminIdCancha(String(r.id_cancha));
   };
 
   const handleModificarAdmin = async (e: any) => {
     e.preventDefault();
     if (!reservaModificandoAdmin) return;
     try {
-      const r = await axios.put(
-        `http://127.0.0.1:5000/api/admin/reservas/${reservaModificandoAdmin.id_reserva}/modificar-admin`,
-        {
-          id_cancha: parseInt(modAdminIdCancha),
-          fecha_reserva: modAdminFecha,
-          hora_inicio: modAdminHora,
-          duracion: parseFloat(modAdminDuracion),
-        }
-      );
-      alert(
-        `✅ ${r.data.mensaje}\nCancha: #${r.data.id_cancha} ${r.data.nueva_cancha}\nNuevo monto: Bs ${r.data.nuevo_monto}`
-      );
+      const r = await axios.put(`http://127.0.0.1:5000/api/admin/reservas/${reservaModificandoAdmin.id_reserva}/modificar-admin`, {
+        id_cancha: parseInt(modAdminIdCancha), fecha_reserva: modAdminFecha,
+        hora_inicio: modAdminHora, duracion: parseFloat(modAdminDuracion),
+      });
+      alert(`✅ ${r.data.mensaje}\nCancha: #${r.data.id_cancha} ${r.data.nueva_cancha}\nNuevo monto: Bs ${r.data.nuevo_monto}`);
       setReservaModificandoAdmin(null);
       cargarReservasAdmin();
     } catch (err: any) {
@@ -577,146 +412,83 @@ function App() {
   };
 
   const abrirModalReservaPresencial = () => {
-    setModalReservaPresencial(true);
-    setPresIdCliente("");
-    setPresIdCancha("");
-    setPresFecha("");
-    setPresHora("");
-    setPresDuracion("1");
-    setPresMetodoPago("efectivo");
-    setBusquedaCliente("");
-    setPresMensaje(null);
+    setModalReservaPresencial(true); setPresIdCliente(""); setPresIdCancha("");
+    setPresFecha(""); setPresHora(""); setPresDuracion("1"); setPresMetodoPago("efectivo");
+    setBusquedaCliente(""); setPresMensaje(null);
   };
 
   const handleReservaPresencial = async (e: any) => {
     e.preventDefault();
     setPresMensaje({ texto: "Procesando...", tipo: "info" });
-
     try {
-      const r = await axios.post(
-        "http://127.0.0.1:5000/api/empleado/reservas",
-        {
-          id_cancha: parseInt(presIdCancha),
-          id_cliente: parseInt(presIdCliente),
-          fecha_reserva: presFecha,
-          hora_inicio: presHora,
-          duracion: parseFloat(presDuracion),
-          metodo_pago: presMetodoPago,
-          id_empleado: usuario?.id_empleado || null,
-        }
-      );
+      const r = await axios.post("http://127.0.0.1:5000/api/empleado/reservas", {
+        id_cancha: parseInt(presIdCancha), id_cliente: parseInt(presIdCliente),
+        fecha_reserva: presFecha, hora_inicio: presHora, duracion: parseFloat(presDuracion),
+        metodo_pago: presMetodoPago, id_empleado: usuario?.id_empleado || null,
+      });
       setPresMensaje({
         texto: `✅ ${r.data.mensaje} Monto: Bs ${r.data.monto_total}. Estado: ${r.data.estado}.`,
         tipo: "success",
       });
       cargarReservasAdmin();
     } catch (err: any) {
-      setPresMensaje({
-        texto: `❌ ${
-          err.response?.data?.error || "Error al crear la reserva."
-        }`,
-        tipo: "error",
-      });
+      setPresMensaje({ texto: `❌ ${err.response?.data?.error || "Error al crear la reserva."}`, tipo: "error" });
     }
   };
 
   const clientesFiltrados = clientes.filter((c) => {
     const q = busquedaCliente.toLowerCase().trim();
     if (!q) return false;
-    return (
-      c.nombre_completo.toLowerCase().includes(q) ||
-      c.ci.toLowerCase().includes(q)
-    );
+    return c.nombre_completo.toLowerCase().includes(q) || c.ci.toLowerCase().includes(q);
   });
 
   const abrirModalRegistrarCliente = () => {
-    setModalRegistrarCliente(true);
-    setRegNombre("");
-    setRegApellido("");
-    setRegCi("");
-    setRegCelular("");
-    setRegEmail("");
-    setRegUsername("");
-    setRegContrasena("");
-    setRegMensaje(null);
+    setModalRegistrarCliente(true); setRegNombre(""); setRegApellido("");
+    setRegCi(""); setRegCelular(""); setRegEmail(""); setRegUsername("");
+    setRegContrasena(""); setRegMensaje(null);
   };
 
   const handleRegistrarCliente = async (e: any) => {
     e.preventDefault();
     setRegMensaje({ texto: "Procesando...", tipo: "info" });
-
     try {
       const r = await axios.post("http://127.0.0.1:5000/api/admin/clientes", {
-        nombre: regNombre,
-        apellido: regApellido,
-        ci: regCi,
-        celular: regCelular,
-        email: regEmail,
-        username: regUsername,
-        contrasena: regContrasena,
+        nombre: regNombre, apellido: regApellido, ci: regCi,
+        celular: regCelular, email: regEmail,
+        username: regUsername, contrasena: regContrasena,
       });
-      setRegMensaje({
-        texto: `✅ ${r.data.mensaje}`,
-        tipo: "success",
-      });
+      setRegMensaje({ texto: `✅ ${r.data.mensaje}`, tipo: "success" });
       cargarClientes();
-      setTimeout(() => {
-        setModalRegistrarCliente(false);
-        setRegMensaje(null);
-      }, 1800);
+      setTimeout(() => { setModalRegistrarCliente(false); setRegMensaje(null); }, 1800);
     } catch (err: any) {
-      setRegMensaje({
-        texto: `❌ ${
-          err.response?.data?.error || "Error al registrar cliente."
-        }`,
-        tipo: "error",
-      });
+      setRegMensaje({ texto: `❌ ${err.response?.data?.error || "Error al registrar cliente."}`, tipo: "error" });
     }
   };
 
   const abrirModalBloqueo = () => {
-    setModalBloqueo(true);
-    setBloIdCancha("");
-    setBloFechaInicio("");
-    setBloFechaFin("");
-    setBloHoraInicio("");
-    setBloHoraFin("");
-    setBloMotivo("");
-    setBloMensaje(null);
+    setModalBloqueo(true); setBloIdCancha(""); setBloFechaInicio("");
+    setBloFechaFin(""); setBloHoraInicio(""); setBloHoraFin("");
+    setBloMotivo(""); setBloMensaje(null);
   };
 
   const handleCrearBloqueo = async (e: any) => {
     e.preventDefault();
     if (!usuario?.id_administrador) {
-      setBloMensaje({
-        texto: "❌ Solo el administrador puede crear bloqueos.",
-        tipo: "error",
-      });
+      setBloMensaje({ texto: "❌ Solo el administrador puede crear bloqueos.", tipo: "error" });
       return;
     }
     setBloMensaje({ texto: "Procesando...", tipo: "info" });
-
     try {
       const r = await axios.post("http://127.0.0.1:5000/api/admin/bloqueos", {
-        id_cancha: parseInt(bloIdCancha),
-        id_administrador: usuario.id_administrador,
-        fecha_inicio: bloFechaInicio,
-        fecha_fin: bloFechaFin,
-        hora_inicio: bloHoraInicio,
-        hora_fin: bloHoraFin,
-        motivo: bloMotivo,
+        id_cancha: parseInt(bloIdCancha), id_administrador: usuario.id_administrador,
+        fecha_inicio: bloFechaInicio, fecha_fin: bloFechaFin,
+        hora_inicio: bloHoraInicio, hora_fin: bloHoraFin, motivo: bloMotivo,
       });
       setBloMensaje({ texto: `✅ ${r.data.mensaje}`, tipo: "success" });
       cargarBloqueos();
-      setTimeout(() => {
-        setModalBloqueo(false);
-        setBloMensaje(null);
-      }, 1500);
+      setTimeout(() => { setModalBloqueo(false); setBloMensaje(null); }, 1500);
     } catch (err: any) {
-      setBloMensaje({
-        texto: `❌ ${err.response?.data?.error || "Error al crear bloqueo."}`,
-        tipo: "error",
-      });
+      setBloMensaje({ texto: `❌ ${err.response?.data?.error || "Error al crear bloqueo."}`, tipo: "error" });
     }
   };
 
@@ -733,71 +505,45 @@ function App() {
 
   const abrirModalCancha = (cancha?: Cancha) => {
     if (cancha) {
-      setCanchaEditando(cancha);
-      setCanFormNombre(cancha.nombre);
-      setCanFormDeporte(cancha.deporte);
-      setCanFormPrecio(String(cancha.precio_hora));
-      setCanFormTechada(cancha.techada);
-      setCanFormUbicacion(cancha.ubicacion || "");
+      setCanchaEditando(cancha); setCanFormNombre(cancha.nombre);
+      setCanFormDeporte(cancha.deporte); setCanFormPrecio(String(cancha.precio_hora));
+      setCanFormTechada(cancha.techada); setCanFormUbicacion(cancha.ubicacion || "");
       setCanFormSuperficie(cancha.superficie || "");
-      setCanFormCategoria(String(cancha.id_categoria || ""));
-      setCanFormEstado(cancha.estado);
+      setCanFormCategoria(String(cancha.id_categoria || "")); setCanFormEstado(cancha.estado);
     } else {
-      setCanchaEditando(null);
-      setCanFormNombre("");
-      setCanFormDeporte("Fútbol");
-      setCanFormPrecio("");
-      setCanFormTechada(false);
-      setCanFormUbicacion("");
-      setCanFormSuperficie("");
-      setCanFormCategoria(categorias[0]?.id_categoria.toString() || "");
+      setCanchaEditando(null); setCanFormNombre(""); setCanFormDeporte("Fútbol");
+      setCanFormPrecio(""); setCanFormTechada(false); setCanFormUbicacion("");
+      setCanFormSuperficie(""); setCanFormCategoria(categorias[0]?.id_categoria.toString() || "");
       setCanFormEstado("disponible");
     }
-    setCanMensaje(null);
-    setModalCancha(true);
+    setCanMensaje(null); setModalCancha(true);
   };
 
   const handleGuardarCancha = async (e: any) => {
     e.preventDefault();
     if (!usuario?.id_administrador) {
-      setCanMensaje({ texto: "❌ Solo admin.", tipo: "error" });
-      return;
+      setCanMensaje({ texto: "❌ Solo admin.", tipo: "error" }); return;
     }
     setCanMensaje({ texto: "Guardando...", tipo: "info" });
-
     const datos = {
-      nombre_cancha: canFormNombre,
-      tipo_deporte: canFormDeporte,
-      precio_hora: parseFloat(canFormPrecio),
-      techada: canFormTechada,
-      ubicacion: canFormUbicacion,
-      superficie: canFormSuperficie,
-      id_categoria: parseInt(canFormCategoria),
-      id_administrador: usuario.id_administrador,
+      nombre_cancha: canFormNombre, tipo_deporte: canFormDeporte,
+      precio_hora: parseFloat(canFormPrecio), techada: canFormTechada,
+      ubicacion: canFormUbicacion, superficie: canFormSuperficie,
+      id_categoria: parseInt(canFormCategoria), id_administrador: usuario.id_administrador,
       estado: canFormEstado,
     };
-
     try {
       if (canchaEditando) {
-        await axios.put(
-          `http://127.0.0.1:5000/api/admin/canchas/${canchaEditando.id}`,
-          datos
-        );
+        await axios.put(`http://127.0.0.1:5000/api/admin/canchas/${canchaEditando.id}`, datos);
         setCanMensaje({ texto: "✅ Cancha actualizada", tipo: "success" });
       } else {
         await axios.post("http://127.0.0.1:5000/api/admin/canchas", datos);
         setCanMensaje({ texto: "✅ Cancha creada", tipo: "success" });
       }
       cargarCanchas();
-      setTimeout(() => {
-        setModalCancha(false);
-        setCanMensaje(null);
-      }, 1200);
+      setTimeout(() => { setModalCancha(false); setCanMensaje(null); }, 1200);
     } catch (err: any) {
-      setCanMensaje({
-        texto: `❌ ${err.response?.data?.error || "Error al guardar."}`,
-        tipo: "error",
-      });
+      setCanMensaje({ texto: `❌ ${err.response?.data?.error || "Error al guardar."}`, tipo: "error" });
     }
   };
 
@@ -814,49 +560,33 @@ function App() {
 
   const abrirModalCategoria = (cat?: Categoria) => {
     if (cat) {
-      setCatEditando(cat);
-      setCatFormNombre(cat.nombre);
+      setCatEditando(cat); setCatFormNombre(cat.nombre);
       setCatFormDescripcion(cat.descripcion || "");
     } else {
-      setCatEditando(null);
-      setCatFormNombre("");
-      setCatFormDescripcion("");
+      setCatEditando(null); setCatFormNombre(""); setCatFormDescripcion("");
     }
-    setCatMensaje(null);
-    setModalCategoria(true);
+    setCatMensaje(null); setModalCategoria(true);
   };
 
   const handleGuardarCategoria = async (e: any) => {
     e.preventDefault();
     setCatMensaje({ texto: "Guardando...", tipo: "info" });
-
     try {
       if (catEditando) {
-        await axios.put(
-          `http://127.0.0.1:5000/api/admin/categorias/${catEditando.id_categoria}`,
-          {
-            nombre: catFormNombre,
-            descripcion: catFormDescripcion,
-          }
-        );
+        await axios.put(`http://127.0.0.1:5000/api/admin/categorias/${catEditando.id_categoria}`, {
+          nombre: catFormNombre, descripcion: catFormDescripcion,
+        });
         setCatMensaje({ texto: "✅ Categoría actualizada", tipo: "success" });
       } else {
         await axios.post("http://127.0.0.1:5000/api/admin/categorias", {
-          nombre: catFormNombre,
-          descripcion: catFormDescripcion,
+          nombre: catFormNombre, descripcion: catFormDescripcion,
         });
         setCatMensaje({ texto: "✅ Categoría creada", tipo: "success" });
       }
       cargarCategorias();
-      setTimeout(() => {
-        setModalCategoria(false);
-        setCatMensaje(null);
-      }, 1200);
+      setTimeout(() => { setModalCategoria(false); setCatMensaje(null); }, 1200);
     } catch (err: any) {
-      setCatMensaje({
-        texto: `❌ ${err.response?.data?.error || "Error."}`,
-        tipo: "error",
-      });
+      setCatMensaje({ texto: `❌ ${err.response?.data?.error || "Error."}`, tipo: "error" });
     }
   };
 
@@ -885,51 +615,22 @@ function App() {
           <form onSubmit={handleLogin}>
             <div className="form-group">
               <label>Usuario</label>
-              <input
-                type="text"
-                value={loginUsername}
-                onChange={(e) => setLoginUsername(e.target.value)}
-                placeholder="Ej: juan"
-                required
-              />
+              <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="Ej: juan" required />
             </div>
             <div className="form-group">
               <label>Contraseña</label>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••"
-                required
-              />
+              <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="••••••" required />
             </div>
-            <button
-              type="submit"
-              className="btn-primary"
-              style={{ width: "100%" }}
-              disabled={loginCargando}
-            >
+            <button type="submit" className="btn-primary" style={{ width: "100%" }} disabled={loginCargando}>
               {loginCargando ? "Ingresando..." : "Iniciar Sesión"}
             </button>
           </form>
-          {loginError && (
-            <div className="mensaje error" style={{ marginTop: "15px" }}>
-              {loginError}
-            </div>
-          )}
+          {loginError && <div className="mensaje error" style={{ marginTop: "15px" }}>{loginError}</div>}
           <div className="login-hint">
-            <p>
-              <strong>Credenciales de prueba:</strong>
-            </p>
-            <p>
-              👤 Cliente: <code>juan</code> / <code>123</code>
-            </p>
-            <p>
-              🛡️ Admin: <code>admin</code> / <code>admin123</code>
-            </p>
-            <p>
-              💼 Empleado: <code>pedro</code> / <code>123</code>
-            </p>
+            <p><strong>Credenciales de prueba:</strong></p>
+            <p>👤 Cliente: <code>juan</code> / <code>123</code></p>
+            <p>🛡️ Admin: <code>admin</code> / <code>admin123</code></p>
+            <p>💼 Empleado: <code>pedro</code> / <code>123</code></p>
           </div>
         </div>
       </div>
@@ -937,12 +638,7 @@ function App() {
   }
 
   if (cargando) return <div className="cargando">Cargando canchas...</div>;
-  if (error)
-    return (
-      <div className="app-container">
-        <p className="mensaje error">{error}</p>
-      </div>
-    );
+  if (error) return <div className="app-container"><p className="mensaje error">{error}</p></div>;
 
   // ============================================================
   // PANTALLA PRINCIPAL
@@ -955,20 +651,14 @@ function App() {
           <div className="user-info">
             <div className="user-details">
               <span className="user-name">👤 {usuario.nombre_completo}</span>
-              <span className={`rol-badge rol-${usuario.rol}`}>
-                {usuario.rol}
-              </span>
+              <span className={`rol-badge rol-${usuario.rol}`}>{usuario.rol}</span>
             </div>
-            <button className="btn-secondary btn-sm" onClick={handleLogout}>
-              Cerrar sesión
-            </button>
+            <button className="btn-secondary btn-sm" onClick={handleLogout}>Cerrar sesión</button>
           </div>
         </div>
       </header>
 
-      {/* ============================================== */}
       {/* VISTA: CLIENTE */}
-      {/* ============================================== */}
       {usuario.rol === "cliente" && (
         <>
           <h2 className="section-title">Canchas Disponibles</h2>
@@ -979,15 +669,11 @@ function App() {
                   <span className="cancha-id">#{c.id}</span>
                   <h3>{c.nombre}</h3>
                 </div>
-                <p className="deporte">
-                  ⚽ {c.deporte} {c.techada && "• Techada"}
-                </p>
+                <p className="deporte">⚽ {c.deporte} {c.techada && "• Techada"}</p>
                 {c.categoria && <p className="deporte">🏷️ {c.categoria}</p>}
                 {c.ubicacion && <p className="deporte">📍 {c.ubicacion}</p>}
                 {c.superficie && <p className="deporte">🏟️ {c.superficie}</p>}
-                <div className="precio">
-                  Bs {c.precio_hora} <span>/ hora</span>
-                </div>
+                <div className="precio">Bs {c.precio_hora} <span>/ hora</span></div>
                 <span className={`badge ${c.estado}`}>{c.estado}</span>
               </div>
             ))}
@@ -1000,100 +686,42 @@ function App() {
             <form onSubmit={handleReserva}>
               <div className="form-group">
                 <label>Cancha</label>
-                <select
-                  value={idCancha}
-                  onChange={(e) => setIdCancha(e.target.value)}
-                  required
-                >
+                <select value={idCancha} onChange={(e) => setIdCancha(e.target.value)} required>
                   <option value="">Seleccione una cancha</option>
                   {canchas.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      #{c.id} - {c.nombre} - Bs {c.precio_hora}/h
-                    </option>
+                    <option key={c.id} value={c.id}>#{c.id} - {c.nombre} - Bs {c.precio_hora}/h</option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
                 <label>Fecha</label>
-                <input
-                  type="date"
-                  value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  required
-                />
+                <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required />
               </div>
               <div className="form-group">
                 <label>Hora de inicio</label>
-                <input
-                  type="time"
-                  value={hora}
-                  onChange={(e) => setHora(e.target.value)}
-                  min="06:00"
-                  max="23:00"
-                  required
-                />
-                <small className="hora-hint">
-                  🕐 Horario de atención: 06:00 a 23:00
-                </small>
+                <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} min="06:00" max="23:00" required />
+                <small className="hora-hint">🕐 Horario de atención: 06:00 a 23:00</small>
               </div>
               <div className="form-group">
                 <label>Duración (horas)</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  min="1"
-                  max="4"
-                  value={duracion}
-                  onChange={(e) => setDuracion(e.target.value)}
-                  required
-                />
+                <input type="number" step="0.5" min="1" max="4" value={duracion} onChange={(e) => setDuracion(e.target.value)} required />
                 <div className="quick-selects">
                   {DURACIONES_COMUNES.map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDuracion(String(d))}
-                    >
-                      {d}h
-                    </button>
+                    <button key={d} type="button" onClick={() => setDuracion(String(d))}>{d}h</button>
                   ))}
                 </div>
               </div>
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ width: "100%" }}
-              >
-                Reservar
-              </button>
+              <button type="submit" className="btn-primary" style={{ width: "100%" }}>Reservar</button>
             </form>
-            {mensajeReserva && (
-              <div className={`mensaje ${mensajeReserva.tipo}`}>
-                {mensajeReserva.texto}
-              </div>
-            )}
+            {mensajeReserva && <div className={`mensaje ${mensajeReserva.tipo}`}>{mensajeReserva.texto}</div>}
           </div>
 
           <hr className="divider" />
 
           <h2 className="section-title">Mis Reservas</h2>
           <div className="filtros">
-            <button
-              className={`filtro-btn ${
-                filtroReservas === "todas" ? "active" : ""
-              }`}
-              onClick={() => setFiltroReservas("todas")}
-            >
-              Todas
-            </button>
-            <button
-              className={`filtro-btn ${
-                filtroReservas === "vigentes" ? "active" : ""
-              }`}
-              onClick={() => setFiltroReservas("vigentes")}
-            >
-              Vigentes
-            </button>
+            <button className={`filtro-btn ${filtroReservas === "todas" ? "active" : ""}`} onClick={() => setFiltroReservas("todas")}>Todas</button>
+            <button className={`filtro-btn ${filtroReservas === "vigentes" ? "active" : ""}`} onClick={() => setFiltroReservas("vigentes")}>Vigentes</button>
           </div>
 
           {reservas.length === 0 ? (
@@ -1103,64 +731,25 @@ function App() {
               <table>
                 <thead>
                   <tr>
-                    <th>Cancha</th>
-                    <th>Fecha</th>
-                    <th>Inicio</th>
-                    <th>Fin</th>
-                    <th>Estado</th>
-                    <th>Motivo</th>
-                    <th style={{ textAlign: "center" }}>Acciones</th>
+                    <th>Cancha</th><th>Fecha</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Motivo</th><th style={{ textAlign: "center" }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reservas.map((r) => (
                     <tr key={r.id_reserva}>
-                      <td>
-                        <strong>
-                          #{r.id_cancha} {r.cancha}
-                        </strong>
-                      </td>
+                      <td><strong>#{r.id_cancha} {r.cancha}</strong></td>
                       <td>{r.fecha}</td>
                       <td>{r.hora_inicio}</td>
                       <td>{r.hora_fin}</td>
-                      <td>
-                        <span className={`estado ${r.estado}`}>{r.estado}</span>
-                      </td>
-                      <td
-                        style={{
-                          fontSize: "0.85rem",
-                          color: "var(--color-text-dim)",
-                          maxWidth: "200px",
-                        }}
-                      >
-                        {r.motivo_cancelacion || "—"}
-                      </td>
+                      <td><span className={`estado ${r.estado}`}>{r.estado}</span></td>
+                      <td style={{ fontSize: "0.85rem", color: "var(--color-text-dim)", maxWidth: "200px" }}>{r.motivo_cancelacion || "—"}</td>
                       <td>
                         <div className="acciones">
                           {r.estado === "pendiente" && (
-                            <button
-                              className="btn-success btn-sm"
-                              onClick={() => setReservaPagando(r)}
-                            >
-                              💳 Pagar
-                            </button>
+                            <button className="btn-success btn-sm" onClick={() => setReservaPagando(r)}>💳 Pagar</button>
                           )}
-                          {(r.estado === "pendiente" ||
-                            r.estado === "confirmada") && (
-                            <>
-                              <button
-                                className="btn-warning btn-sm"
-                                onClick={() => abrirModalModificar(r)}
-                              >
-                                ✏️ Modificar
-                              </button>
-                              <button
-                                className="btn-danger btn-sm"
-                                onClick={() => cancelarReserva(r.id_reserva)}
-                              >
-                                ✖ Cancelar
-                              </button>
-                            </>
+                          {(r.estado === "pendiente" || r.estado === "confirmada") && (
+                            <button className="btn-danger btn-sm" onClick={() => cancelarReserva(r.id_reserva)}>✖ Cancelar</button>
                           )}
                         </div>
                       </td>
@@ -1173,47 +762,17 @@ function App() {
         </>
       )}
 
-      {/* ============================================== */}
       {/* VISTA: EMPLEADO */}
-      {/* ============================================== */}
       {usuario.rol === "empleado" && (
         <>
           <h2 className="section-title">📋 Gestión de Reservas</h2>
-
-          <div
-            style={{
-              marginBottom: "15px",
-              display: "flex",
-              gap: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-            <button
-              className="btn-primary"
-              onClick={abrirModalReservaPresencial}
-            >
-              ➕ Registrar Reserva Presencial
-            </button>
-            <button
-              className="btn-success"
-              onClick={abrirModalRegistrarCliente}
-            >
-              👤 Registrar Cliente Nuevo
-            </button>
+          <div style={{ marginBottom: "15px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={abrirModalReservaPresencial}>➕ Registrar Reserva Presencial</button>
+            <button className="btn-success" onClick={abrirModalRegistrarCliente}>👤 Registrar Cliente Nuevo</button>
           </div>
-
           <div className="filtros">
-            <input
-              type="date"
-              value={filtroFecha}
-              onChange={(e) => setFiltroFecha(e.target.value)}
-              style={{ maxWidth: "200px" }}
-            />
-            <select
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-              style={{ maxWidth: "180px" }}
-            >
+            <input type="date" value={filtroFecha} onChange={(e) => setFiltroFecha(e.target.value)} style={{ maxWidth: "200px" }} />
+            <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={{ maxWidth: "180px" }}>
               <option value="">Todos los estados</option>
               <option value="pendiente">Pendiente</option>
               <option value="confirmada">Confirmada</option>
@@ -1221,80 +780,33 @@ function App() {
               <option value="completada">Completada</option>
               <option value="expirada">Expirada</option>
             </select>
-            <button
-              className="btn-secondary"
-              onClick={() => {
-                setFiltroFecha("");
-                setFiltroEstado("");
-              }}
-            >
-              Limpiar filtros
-            </button>
+            <button className="btn-secondary" onClick={() => { setFiltroFecha(""); setFiltroEstado(""); }}>Limpiar filtros</button>
           </div>
-
           {reservasAdmin.length === 0 ? (
-            <div className="estado-vacio">
-              No hay reservas que coincidan con los filtros.
-            </div>
+            <div className="estado-vacio">No hay reservas que coincidan con los filtros.</div>
           ) : (
             <div className="tabla-wrapper">
               <table>
                 <thead>
                   <tr>
-                    <th>Cliente</th>
-                    <th>Cancha</th>
-                    <th>Fecha</th>
-                    <th>Horario</th>
-                    <th>Estado</th>
-                    <th>Motivo</th>
-                    <th style={{ textAlign: "center" }}>Acciones</th>
+                    <th>Cliente</th><th>Cancha</th><th>Fecha</th><th>Horario</th><th>Estado</th><th>Motivo</th><th style={{ textAlign: "center" }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reservasAdmin.map((r) => (
                     <tr key={r.id_reserva}>
-                      <td>
-                        <strong>{r.cliente}</strong>
-                      </td>
-                      <td>
-                        #{r.id_cancha} {r.cancha}
-                      </td>
+                      <td><strong>{r.cliente}</strong></td>
+                      <td>#{r.id_cancha} {r.cancha}</td>
                       <td>{r.fecha}</td>
-                      <td>
-                        {r.hora_inicio} - {r.hora_fin}
-                      </td>
-                      <td>
-                        <span className={`estado ${r.estado}`}>{r.estado}</span>
-                      </td>
-                      <td
-                        style={{
-                          fontSize: "0.85rem",
-                          color: "var(--color-text-dim)",
-                          maxWidth: "200px",
-                        }}
-                      >
-                        {r.motivo_cancelacion || "—"}
-                      </td>
+                      <td>{r.hora_inicio} - {r.hora_fin}</td>
+                      <td><span className={`estado ${r.estado}`}>{r.estado}</span></td>
+                      <td style={{ fontSize: "0.85rem", color: "var(--color-text-dim)", maxWidth: "200px" }}>{r.motivo_cancelacion || "—"}</td>
                       <td>
                         <div className="acciones">
-                          {(r.estado === "pendiente" ||
-                            r.estado === "confirmada") && (
+                          {(r.estado === "pendiente" || r.estado === "confirmada") && (
                             <>
-                              <button
-                                className="btn-warning btn-sm"
-                                onClick={() => abrirModalModificarAdmin(r)}
-                              >
-                                ✏️ Modificar
-                              </button>
-                              <button
-                                className="btn-danger btn-sm"
-                                onClick={() => {
-                                  setReservaCancelandoAdmin(r);
-                                  setMotivoCancelacion("");
-                                }}
-                              >
-                                ⚠️ Cancelar
-                              </button>
+                              <button className="btn-warning btn-sm" onClick={() => abrirModalModificarAdmin(r)}>✏️ Modificar</button>
+                              <button className="btn-danger btn-sm" onClick={() => { setReservaCancelandoAdmin(r); setMotivoCancelacion(""); }}>⚠️ Cancelar</button>
                             </>
                           )}
                         </div>
@@ -1308,71 +820,25 @@ function App() {
         </>
       )}
 
-      {/* ============================================== */}
       {/* VISTA: ADMINISTRADOR */}
-      {/* ============================================== */}
       {usuario.rol === "administrador" && (
         <>
           <h2 className="section-title">📋 Gestión de Reservas</h2>
-
-          <div
-            style={{
-              marginBottom: "15px",
-              display: "flex",
-              gap: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-            <button
-              className="btn-primary"
-              onClick={abrirModalReservaPresencial}
-            >
-              ➕ Reserva Presencial
-            </button>
-            <button
-              className="btn-success"
-              onClick={abrirModalRegistrarCliente}
-            >
-              👤 Registrar Cliente
-            </button>
-            <button className="btn-warning" onClick={abrirModalBloqueo}>
-              🔒 Bloquear Cancha
-            </button>
-            <button
-              className={verGestionCanchas ? "btn-secondary" : "btn-primary"}
-              onClick={() => setVerGestionCanchas(!verGestionCanchas)}
-              style={{ background: verGestionCanchas ? "#555" : "#4caf50" }}
-            >
+          <div style={{ marginBottom: "15px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={abrirModalReservaPresencial}>➕ Reserva Presencial</button>
+            <button className="btn-success" onClick={abrirModalRegistrarCliente}>👤 Registrar Cliente</button>
+            <button className="btn-warning" onClick={abrirModalBloqueo}>🔒 Bloquear Cancha</button>
+            <button className={verGestionCanchas ? "btn-secondary" : "btn-primary"} onClick={() => setVerGestionCanchas(!verGestionCanchas)} style={{ background: verGestionCanchas ? "#555" : "#4caf50" }}>
               🏟️ {verGestionCanchas ? "Ocultar Canchas" : "Gestionar Canchas"}
             </button>
-            <button
-              className={verGestionCategorias ? "btn-secondary" : "btn-primary"}
-              onClick={() => setVerGestionCategorias(!verGestionCategorias)}
-              style={{ background: verGestionCategorias ? "#555" : "#ff9800" }}
-            >
+            <button className={verGestionCategorias ? "btn-secondary" : "btn-primary"} onClick={() => setVerGestionCategorias(!verGestionCategorias)} style={{ background: verGestionCategorias ? "#555" : "#ff9800" }}>
               🏷️ {verGestionCategorias ? "Ocultar Categorías" : "Categorías"}
-            </button>
-            <button
-              className={verAuditoria ? "btn-secondary" : "btn-primary"}
-              onClick={() => setVerAuditoria(!verAuditoria)}
-              style={{ background: verAuditoria ? "#555" : "#9c27b0" }}
-            >
-              📜 {verAuditoria ? "Ocultar Auditoría" : "Auditoría"}
             </button>
           </div>
 
           <div className="filtros">
-            <input
-              type="date"
-              value={filtroFecha}
-              onChange={(e) => setFiltroFecha(e.target.value)}
-              style={{ maxWidth: "200px" }}
-            />
-            <select
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-              style={{ maxWidth: "180px" }}
-            >
+            <input type="date" value={filtroFecha} onChange={(e) => setFiltroFecha(e.target.value)} style={{ maxWidth: "200px" }} />
+            <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={{ maxWidth: "180px" }}>
               <option value="">Todos los estados</option>
               <option value="pendiente">Pendiente</option>
               <option value="confirmada">Confirmada</option>
@@ -1380,80 +846,34 @@ function App() {
               <option value="completada">Completada</option>
               <option value="expirada">Expirada</option>
             </select>
-            <button
-              className="btn-secondary"
-              onClick={() => {
-                setFiltroFecha("");
-                setFiltroEstado("");
-              }}
-            >
-              Limpiar filtros
-            </button>
+            <button className="btn-secondary" onClick={() => { setFiltroFecha(""); setFiltroEstado(""); }}>Limpiar filtros</button>
           </div>
 
           {reservasAdmin.length === 0 ? (
-            <div className="estado-vacio">
-              No hay reservas que coincidan con los filtros.
-            </div>
+            <div className="estado-vacio">No hay reservas que coincidan con los filtros.</div>
           ) : (
             <div className="tabla-wrapper">
               <table>
                 <thead>
                   <tr>
-                    <th>Cliente</th>
-                    <th>Cancha</th>
-                    <th>Fecha</th>
-                    <th>Horario</th>
-                    <th>Estado</th>
-                    <th>Motivo</th>
-                    <th style={{ textAlign: "center" }}>Acciones</th>
+                    <th>Cliente</th><th>Cancha</th><th>Fecha</th><th>Horario</th><th>Estado</th><th>Motivo</th><th style={{ textAlign: "center" }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reservasAdmin.map((r) => (
                     <tr key={r.id_reserva}>
-                      <td>
-                        <strong>{r.cliente}</strong>
-                      </td>
-                      <td>
-                        #{r.id_cancha} {r.cancha}
-                      </td>
+                      <td><strong>{r.cliente}</strong></td>
+                      <td>#{r.id_cancha} {r.cancha}</td>
                       <td>{r.fecha}</td>
-                      <td>
-                        {r.hora_inicio} - {r.hora_fin}
-                      </td>
-                      <td>
-                        <span className={`estado ${r.estado}`}>{r.estado}</span>
-                      </td>
-                      <td
-                        style={{
-                          fontSize: "0.85rem",
-                          color: "var(--color-text-dim)",
-                          maxWidth: "200px",
-                        }}
-                      >
-                        {r.motivo_cancelacion || "—"}
-                      </td>
+                      <td>{r.hora_inicio} - {r.hora_fin}</td>
+                      <td><span className={`estado ${r.estado}`}>{r.estado}</span></td>
+                      <td style={{ fontSize: "0.85rem", color: "var(--color-text-dim)", maxWidth: "200px" }}>{r.motivo_cancelacion || "—"}</td>
                       <td>
                         <div className="acciones">
-                          {(r.estado === "pendiente" ||
-                            r.estado === "confirmada") && (
+                          {(r.estado === "pendiente" || r.estado === "confirmada") && (
                             <>
-                              <button
-                                className="btn-warning btn-sm"
-                                onClick={() => abrirModalModificarAdmin(r)}
-                              >
-                                ✏️ Modificar
-                              </button>
-                              <button
-                                className="btn-danger btn-sm"
-                                onClick={() => {
-                                  setReservaCancelandoAdmin(r);
-                                  setMotivoCancelacion("");
-                                }}
-                              >
-                                ⚠️ Cancelar
-                              </button>
+                              <button className="btn-warning btn-sm" onClick={() => abrirModalModificarAdmin(r)}>✏️ Modificar</button>
+                              <button className="btn-danger btn-sm" onClick={() => { setReservaCancelandoAdmin(r); setMotivoCancelacion(""); }}>⚠️ Cancelar</button>
                             </>
                           )}
                         </div>
@@ -1469,83 +889,33 @@ function App() {
           {verGestionCanchas && (
             <div ref={gestionCanchasRef}>
               <hr className="divider" />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "15px",
-                }}
-              >
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  🏟️ Gestión de Canchas
-                </h2>
-                <button
-                  className="btn-primary"
-                  onClick={() => abrirModalCancha()}
-                >
-                  ➕ Nueva Cancha
-                </button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+                <h2 className="section-title" style={{ marginBottom: 0 }}>🏟️ Gestión de Canchas</h2>
+                <button className="btn-primary" onClick={() => abrirModalCancha()}>➕ Nueva Cancha</button>
               </div>
-
               <div className="tabla-wrapper">
                 <table>
                   <thead>
                     <tr>
-                      <th>ID</th>
-                      <th>Nombre</th>
-                      <th>Deporte</th>
-                      <th>Categoría</th>
-                      <th>Ubicación</th>
-                      <th>Superficie</th>
-                      <th>Precio/h</th>
-                      <th>Techada</th>
-                      <th>Estado</th>
-                      <th style={{ textAlign: "center" }}>Acciones</th>
+                      <th>ID</th><th>Nombre</th><th>Deporte</th><th>Categoría</th><th>Ubicación</th><th>Superficie</th><th>Precio/h</th><th>Techada</th><th>Estado</th><th style={{ textAlign: "center" }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {canchas.map((c) => (
                       <tr key={c.id}>
-                        <td>
-                          <strong style={{ color: "var(--color-primary)" }}>
-                            #{c.id}
-                          </strong>
-                        </td>
-                        <td>
-                          <strong>{c.nombre}</strong>
-                        </td>
+                        <td><strong style={{ color: "var(--color-primary)" }}>#{c.id}</strong></td>
+                        <td><strong>{c.nombre}</strong></td>
                         <td>{c.deporte}</td>
                         <td>{c.categoria || "—"}</td>
-                        <td style={{ fontSize: "0.85rem" }}>
-                          {c.ubicacion || "—"}
-                        </td>
-                        <td style={{ fontSize: "0.85rem" }}>
-                          {c.superficie || "—"}
-                        </td>
+                        <td style={{ fontSize: "0.85rem" }}>{c.ubicacion || "—"}</td>
+                        <td style={{ fontSize: "0.85rem" }}>{c.superficie || "—"}</td>
                         <td>Bs {c.precio_hora}</td>
                         <td>{c.techada ? "✅" : "❌"}</td>
-                        <td>
-                          <span className={`badge ${c.estado}`}>
-                            {c.estado}
-                          </span>
-                        </td>
+                        <td><span className={`badge ${c.estado}`}>{c.estado}</span></td>
                         <td>
                           <div className="acciones">
-                            <button
-                              className="btn-warning btn-sm"
-                              onClick={() => abrirModalCancha(c)}
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="btn-danger btn-sm"
-                              onClick={() =>
-                                handleEliminarCancha(c.id, c.nombre)
-                              }
-                            >
-                              🗑️
-                            </button>
+                            <button className="btn-warning btn-sm" onClick={() => abrirModalCancha(c)}>✏️</button>
+                            <button className="btn-danger btn-sm" onClick={() => handleEliminarCancha(c.id, c.nombre)}>🗑️</button>
                           </div>
                         </td>
                       </tr>
@@ -1560,68 +930,25 @@ function App() {
           {verGestionCategorias && (
             <div ref={gestionCategoriasRef}>
               <hr className="divider" />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "15px",
-                }}
-              >
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  🏷️ Gestión de Categorías
-                </h2>
-                <button
-                  className="btn-primary"
-                  onClick={() => abrirModalCategoria()}
-                >
-                  ➕ Nueva Categoría
-                </button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+                <h2 className="section-title" style={{ marginBottom: 0 }}>🏷️ Gestión de Categorías</h2>
+                <button className="btn-primary" onClick={() => abrirModalCategoria()}>➕ Nueva Categoría</button>
               </div>
-
               <div className="tabla-wrapper">
                 <table>
                   <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nombre</th>
-                      <th>Descripción</th>
-                      <th style={{ textAlign: "center" }}>Acciones</th>
-                    </tr>
+                    <tr><th>ID</th><th>Nombre</th><th>Descripción</th><th style={{ textAlign: "center" }}>Acciones</th></tr>
                   </thead>
                   <tbody>
                     {categorias.map((c) => (
                       <tr key={c.id_categoria}>
-                        <td>
-                          <strong style={{ color: "var(--color-primary)" }}>
-                            #{c.id_categoria}
-                          </strong>
-                        </td>
-                        <td>
-                          <strong>{c.nombre}</strong>
-                        </td>
-                        <td style={{ fontSize: "0.9rem" }}>
-                          {c.descripcion || "—"}
-                        </td>
+                        <td><strong style={{ color: "var(--color-primary)" }}>#{c.id_categoria}</strong></td>
+                        <td><strong>{c.nombre}</strong></td>
+                        <td style={{ fontSize: "0.9rem" }}>{c.descripcion || "—"}</td>
                         <td>
                           <div className="acciones">
-                            <button
-                              className="btn-warning btn-sm"
-                              onClick={() => abrirModalCategoria(c)}
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="btn-danger btn-sm"
-                              onClick={() =>
-                                handleEliminarCategoria(
-                                  c.id_categoria,
-                                  c.nombre
-                                )
-                              }
-                            >
-                              🗑️
-                            </button>
+                            <button className="btn-warning btn-sm" onClick={() => abrirModalCategoria(c)}>✏️</button>
+                            <button className="btn-danger btn-sm" onClick={() => handleEliminarCategoria(c.id_categoria, c.nombre)}>🗑️</button>
                           </div>
                         </td>
                       </tr>
@@ -1636,48 +963,25 @@ function App() {
           <div ref={bloqueosRef}>
             <hr className="divider" />
             <h2 className="section-title">🔒 Canchas Bloqueadas</h2>
-
             {bloqueos.length === 0 ? (
               <div className="estado-vacio">No hay bloqueos activos.</div>
             ) : (
               <div className="tabla-wrapper">
                 <table>
                   <thead>
-                    <tr>
-                      <th>Cancha</th>
-                      <th>Desde</th>
-                      <th>Hasta</th>
-                      <th>Horario</th>
-                      <th>Motivo</th>
-                      <th style={{ textAlign: "center" }}>Acciones</th>
-                    </tr>
+                    <tr><th>Cancha</th><th>Desde</th><th>Hasta</th><th>Horario</th><th>Motivo</th><th style={{ textAlign: "center" }}>Acciones</th></tr>
                   </thead>
                   <tbody>
                     {bloqueos.map((b) => (
                       <tr key={b.id_bloqueo}>
-                        <td>
-                          <strong>
-                            #{b.id_cancha} {b.cancha}
-                          </strong>
-                        </td>
+                        <td><strong>#{b.id_cancha} {b.cancha}</strong></td>
                         <td>{b.fecha_inicio}</td>
                         <td>{b.fecha_fin}</td>
-                        <td>
-                          {b.hora_inicio} - {b.hora_fin}
-                        </td>
-                        <td style={{ fontSize: "0.85rem", maxWidth: "250px" }}>
-                          {b.motivo}
-                        </td>
+                        <td>{b.hora_inicio} - {b.hora_fin}</td>
+                        <td style={{ fontSize: "0.85rem", maxWidth: "250px" }}>{b.motivo}</td>
                         <td>
                           <div className="acciones">
-                            <button
-                              className="btn-danger btn-sm"
-                              onClick={() =>
-                                handleEliminarBloqueo(b.id_bloqueo)
-                              }
-                            >
-                              🗑️
-                            </button>
+                            <button className="btn-danger btn-sm" onClick={() => handleEliminarBloqueo(b.id_bloqueo)}>🗑️</button>
                           </div>
                         </td>
                       </tr>
@@ -1687,211 +991,7 @@ function App() {
               </div>
             )}
           </div>
-
-          {/* AUDITORÍA */}
-          {verAuditoria && (
-            <div ref={auditoriaRef}>
-              <hr className="divider" />
-              <h2 className="section-title">📜 Auditoría del Sistema</h2>
-
-              <div className="filtros">
-                <input
-                  type="date"
-                  value={filtroAudFecha}
-                  onChange={(e) => setFiltroAudFecha(e.target.value)}
-                  style={{ maxWidth: "200px" }}
-                />
-                <select
-                  value={filtroAudAccion}
-                  onChange={(e) => setFiltroAudAccion(e.target.value)}
-                  style={{ maxWidth: "220px" }}
-                >
-                  <option value="">Todas las acciones</option>
-                  {auditoriaAcciones.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  value={filtroAudUsername}
-                  onChange={(e) => setFiltroAudUsername(e.target.value)}
-                  placeholder="Buscar por usuario..."
-                  style={{ maxWidth: "200px" }}
-                />
-                <button
-                  className="btn-secondary"
-                  onClick={() => {
-                    setFiltroAudFecha("");
-                    setFiltroAudAccion("");
-                    setFiltroAudUsername("");
-                  }}
-                >
-                  Limpiar filtros
-                </button>
-              </div>
-
-              {auditoria.length === 0 ? (
-                <div className="estado-vacio">No hay registros.</div>
-              ) : (
-                <div className="tabla-wrapper">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Fecha</th>
-                        <th>Usuario</th>
-                        <th>Rol</th>
-                        <th>Acción</th>
-                        <th>Detalle</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {auditoria.map((a) => (
-                        <tr key={a.id_auditoria}>
-                          <td
-                            style={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}
-                          >
-                            {a.fecha}
-                          </td>
-                          <td>
-                            <strong>{a.username}</strong>
-                          </td>
-                          <td>
-                            <span
-                              className={`rol-badge rol-${a.rol}`}
-                              style={{ fontSize: "0.65rem" }}
-                            >
-                              {a.rol}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              style={{
-                                fontSize: "0.75rem",
-                                fontWeight: 600,
-                                padding: "3px 8px",
-                                borderRadius: "10px",
-                                background:
-                                  a.accion.includes("CANCELAR") ||
-                                  a.accion.includes("FALLIDO")
-                                    ? "rgba(230, 57, 70, 0.15)"
-                                    : a.accion.includes("CREAR") ||
-                                      a.accion.includes("LOGIN_EXITOSO") ||
-                                      a.accion.includes("PAGAR")
-                                    ? "rgba(76, 175, 80, 0.15)"
-                                    : "rgba(108, 99, 255, 0.15)",
-                                color:
-                                  a.accion.includes("CANCELAR") ||
-                                  a.accion.includes("FALLIDO")
-                                    ? "var(--color-danger)"
-                                    : a.accion.includes("CREAR") ||
-                                      a.accion.includes("LOGIN_EXITOSO") ||
-                                      a.accion.includes("PAGAR")
-                                    ? "var(--color-success)"
-                                    : "var(--color-primary)",
-                              }}
-                            >
-                              {a.accion}
-                            </span>
-                          </td>
-                          <td
-                            style={{ fontSize: "0.85rem", maxWidth: "400px" }}
-                          >
-                            {a.detalle || "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
         </>
-      )}
-
-      {/* MODAL: MODIFICAR RESERVA (Cliente) */}
-      {usuario.rol === "cliente" && reservaModificando && (
-        <div
-          className="modal-overlay"
-          onClick={() => setReservaModificando(null)}
-        >
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>✏️ Modificar Reserva #{reservaModificando.id_reserva}</h3>
-            <div className="modal-info">
-              <div>
-                <strong>Cancha:</strong> #{reservaModificando.id_cancha}{" "}
-                {reservaModificando.cancha}
-              </div>
-              <div>
-                <strong>Fecha actual:</strong> {reservaModificando.fecha}
-              </div>
-              <div>
-                <strong>Horario actual:</strong>{" "}
-                {reservaModificando.hora_inicio} - {reservaModificando.hora_fin}
-              </div>
-            </div>
-            <form onSubmit={handleModificar}>
-              <div className="form-group">
-                <label>Nueva fecha</label>
-                <input
-                  type="date"
-                  value={modFecha}
-                  onChange={(e) => setModFecha(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Nueva hora</label>
-                <input
-                  type="time"
-                  value={modHora}
-                  onChange={(e) => setModHora(e.target.value)}
-                  min="06:00"
-                  max="23:00"
-                  required
-                />
-                <small className="hora-hint">🕐 Horario: 06:00 a 23:00</small>
-              </div>
-              <div className="form-group">
-                <label>Nueva duración (h)</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  min="1"
-                  max="4"
-                  value={modDuracion}
-                  onChange={(e) => setModDuracion(e.target.value)}
-                  required
-                />
-                <div className="quick-selects">
-                  {DURACIONES_COMUNES.map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setModDuracion(String(d))}
-                    >
-                      {d}h
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="modal-actions">
-                <button type="submit" className="btn-success">
-                  Guardar cambios
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setReservaModificando(null)}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {/* MODAL: PAGAR */}
@@ -1900,26 +1000,14 @@ function App() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>💳 Pagar Reserva #{reservaPagando.id_reserva}</h3>
             <div className="modal-info">
-              <div>
-                <strong>Cancha:</strong> #{reservaPagando.id_cancha}{" "}
-                {reservaPagando.cancha}
-              </div>
-              <div>
-                <strong>Fecha:</strong> {reservaPagando.fecha}
-              </div>
-              <div>
-                <strong>Horario:</strong> {reservaPagando.hora_inicio} -{" "}
-                {reservaPagando.hora_fin}
-              </div>
+              <div><strong>Cancha:</strong> #{reservaPagando.id_cancha} {reservaPagando.cancha}</div>
+              <div><strong>Fecha:</strong> {reservaPagando.fecha}</div>
+              <div><strong>Horario:</strong> {reservaPagando.hora_inicio} - {reservaPagando.hora_fin}</div>
             </div>
             <form onSubmit={handlePagar}>
               <div className="form-group">
                 <label>Método de pago</label>
-                <select
-                  value={metodoPago}
-                  onChange={(e) => setMetodoPago(e.target.value)}
-                  required
-                >
+                <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} required>
                   <option value="efectivo">💵 Efectivo</option>
                   <option value="tarjeta">💳 Tarjeta</option>
                   <option value="transferencia">🏦 Transferencia</option>
@@ -1927,16 +1015,8 @@ function App() {
                 </select>
               </div>
               <div className="modal-actions">
-                <button type="submit" className="btn-success">
-                  Confirmar pago
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setReservaPagando(null)}
-                >
-                  Cancelar
-                </button>
+                <button type="submit" className="btn-success">Confirmar pago</button>
+                <button type="button" className="btn-secondary" onClick={() => setReservaPagando(null)}>Cancelar</button>
               </div>
             </form>
           </div>
@@ -1944,490 +1024,172 @@ function App() {
       )}
 
       {/* MODAL: CANCELAR ADMIN */}
-      {(usuario.rol === "empleado" || usuario.rol === "administrador") &&
-        reservaCancelandoAdmin && (
-          <div
-            className="modal-overlay"
-            onClick={() => setReservaCancelandoAdmin(null)}
-          >
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <h3>⚠️ Cancelar Reserva #{reservaCancelandoAdmin.id_reserva}</h3>
-              <div className="modal-info">
-                <div>
-                  <strong>Cliente:</strong> {reservaCancelandoAdmin.cliente}
-                </div>
-                <div>
-                  <strong>Cancha:</strong> #{reservaCancelandoAdmin.id_cancha}{" "}
-                  {reservaCancelandoAdmin.cancha}
-                </div>
-                <div>
-                  <strong>Fecha:</strong> {reservaCancelandoAdmin.fecha}
-                </div>
-                <div>
-                  <strong>Horario:</strong> {reservaCancelandoAdmin.hora_inicio}{" "}
-                  - {reservaCancelandoAdmin.hora_fin}
-                </div>
-              </div>
-              <form onSubmit={handleCancelarAdmin}>
-                <div className="form-group">
-                  <label>Motivo (fuerza mayor)</label>
-                  <textarea
-                    value={motivoCancelacion}
-                    onChange={(e) => setMotivoCancelacion(e.target.value)}
-                    placeholder="Ej: Daños en la cancha..."
-                    required
-                    style={{
-                      background: "var(--color-bg-elevated)",
-                      border: "1px solid var(--color-border)",
-                      borderRadius: "8px",
-                      padding: "10px 12px",
-                      color: "var(--color-text)",
-                      fontFamily: "inherit",
-                      fontSize: "0.95rem",
-                      minHeight: "80px",
-                      resize: "vertical",
-                    }}
-                  />
-                </div>
-                <div className="modal-actions">
-                  <button type="submit" className="btn-danger">
-                    Confirmar cancelación
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setReservaCancelandoAdmin(null)}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </form>
+      {(usuario.rol === "empleado" || usuario.rol === "administrador") && reservaCancelandoAdmin && (
+        <div className="modal-overlay" onClick={() => setReservaCancelandoAdmin(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>⚠️ Cancelar Reserva #{reservaCancelandoAdmin.id_reserva}</h3>
+            <div className="modal-info">
+              <div><strong>Cliente:</strong> {reservaCancelandoAdmin.cliente}</div>
+              <div><strong>Cancha:</strong> #{reservaCancelandoAdmin.id_cancha} {reservaCancelandoAdmin.cancha}</div>
+              <div><strong>Fecha:</strong> {reservaCancelandoAdmin.fecha}</div>
+              <div><strong>Horario:</strong> {reservaCancelandoAdmin.hora_inicio} - {reservaCancelandoAdmin.hora_fin}</div>
             </div>
+            <form onSubmit={handleCancelarAdmin}>
+              <div className="form-group">
+                <label>Motivo (fuerza mayor)</label>
+                <textarea value={motivoCancelacion} onChange={(e) => setMotivoCancelacion(e.target.value)} placeholder="Ej: Daños en la cancha..." required
+                  style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px 12px", color: "var(--color-text)", fontFamily: "inherit", fontSize: "0.95rem", minHeight: "80px", resize: "vertical" }}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="submit" className="btn-danger">Confirmar cancelación</button>
+                <button type="button" className="btn-secondary" onClick={() => setReservaCancelandoAdmin(null)}>Cerrar</button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
       {/* MODAL: MODIFICAR RESERVA (Admin/Empleado) */}
-      {(usuario.rol === "empleado" || usuario.rol === "administrador") &&
-        reservaModificandoAdmin && (
-          <div
-            className="modal-overlay"
-            onClick={() => setReservaModificandoAdmin(null)}
-          >
-            <div
-              className="modal"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: "550px" }}
-            >
-              <h3>
-                ✏️ Modificar Reserva #{reservaModificandoAdmin.id_reserva}
-              </h3>
-              <div className="modal-info">
-                <div>
-                  <strong>Cliente:</strong> {reservaModificandoAdmin.cliente}
-                </div>
-                <div>
-                  <strong>Cancha actual:</strong> #
-                  {reservaModificandoAdmin.id_cancha}{" "}
-                  {reservaModificandoAdmin.cancha}
-                </div>
-                <div>
-                  <strong>Fecha actual:</strong> {reservaModificandoAdmin.fecha}
-                </div>
-                <div>
-                  <strong>Horario actual:</strong>{" "}
-                  {reservaModificandoAdmin.hora_inicio} -{" "}
-                  {reservaModificandoAdmin.hora_fin}
+      {(usuario.rol === "empleado" || usuario.rol === "administrador") && reservaModificandoAdmin && (
+        <div className="modal-overlay" onClick={() => setReservaModificandoAdmin(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "550px" }}>
+            <h3>✏️ Modificar Reserva #{reservaModificandoAdmin.id_reserva}</h3>
+            <div className="modal-info">
+              <div><strong>Cliente:</strong> {reservaModificandoAdmin.cliente}</div>
+              <div><strong>Cancha actual:</strong> #{reservaModificandoAdmin.id_cancha} {reservaModificandoAdmin.cancha}</div>
+              <div><strong>Fecha actual:</strong> {reservaModificandoAdmin.fecha}</div>
+              <div><strong>Horario actual:</strong> {reservaModificandoAdmin.hora_inicio} - {reservaModificandoAdmin.hora_fin}</div>
+            </div>
+            <form onSubmit={handleModificarAdmin}>
+              <div className="form-group">
+                <label>Cancha</label>
+                <select value={modAdminIdCancha} onChange={(e) => setModAdminIdCancha(e.target.value)} required>
+                  <option value="">Seleccione una cancha</option>
+                  {canchas.map((c) => <option key={c.id} value={c.id}>#{c.id} - {c.nombre} - Bs {c.precio_hora}/h</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Nueva fecha</label>
+                <input type="date" value={modAdminFecha} onChange={(e) => setModAdminFecha(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>Nueva hora de inicio</label>
+                <input type="time" value={modAdminHora} onChange={(e) => setModAdminHora(e.target.value)} min="06:00" max="23:00" required />
+                <small className="hora-hint">🕐 Horario: 06:00 a 23:00</small>
+              </div>
+              <div className="form-group">
+                <label>Nueva duración (h)</label>
+                <input type="number" step="0.5" min="1" max="4" value={modAdminDuracion} onChange={(e) => setModAdminDuracion(e.target.value)} required />
+                <div className="quick-selects">
+                  {DURACIONES_COMUNES.map((d) => <button key={d} type="button" onClick={() => setModAdminDuracion(String(d))}>{d}h</button>)}
                 </div>
               </div>
-              <form onSubmit={handleModificarAdmin}>
-                <div className="form-group">
-                  <label>Cancha</label>
-                  <select
-                    value={modAdminIdCancha}
-                    onChange={(e) => setModAdminIdCancha(e.target.value)}
-                    required
-                  >
-                    <option value="">Seleccione una cancha</option>
-                    {canchas.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        #{c.id} - {c.nombre} - Bs {c.precio_hora}/h
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Nueva fecha</label>
-                  <input
-                    type="date"
-                    value={modAdminFecha}
-                    onChange={(e) => setModAdminFecha(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Nueva hora de inicio</label>
-                  <input
-                    type="time"
-                    value={modAdminHora}
-                    onChange={(e) => setModAdminHora(e.target.value)}
-                    min="06:00"
-                    max="23:00"
-                    required
-                  />
-                  <small className="hora-hint">🕐 Horario: 06:00 a 23:00</small>
-                </div>
-                <div className="form-group">
-                  <label>Nueva duración (h)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="1"
-                    max="4"
-                    value={modAdminDuracion}
-                    onChange={(e) => setModAdminDuracion(e.target.value)}
-                    required
-                  />
-                  <div className="quick-selects">
-                    {DURACIONES_COMUNES.map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => setModAdminDuracion(String(d))}
-                      >
-                        {d}h
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="modal-actions">
-                  <button type="submit" className="btn-success">
-                    Guardar cambios
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setReservaModificandoAdmin(null)}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="modal-actions">
+                <button type="submit" className="btn-success">Guardar cambios</button>
+                <button type="button" className="btn-secondary" onClick={() => setReservaModificandoAdmin(null)}>Cancelar</button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
       {/* MODAL: RESERVA PRESENCIAL */}
-      {(usuario.rol === "empleado" || usuario.rol === "administrador") &&
-        modalReservaPresencial && (
-          <div
-            className="modal-overlay"
-            onClick={() => setModalReservaPresencial(false)}
-          >
-            <div
-              className="modal"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: "600px" }}
-            >
-              <h3>➕ Registrar Reserva Presencial</h3>
-
-              <form onSubmit={handleReservaPresencial}>
-                <div className="form-group">
-                  <label>Buscar cliente (nombre o CI)</label>
-                  <input
-                    type="text"
-                    value={busquedaCliente}
-                    onChange={(e) => setBusquedaCliente(e.target.value)}
-                    placeholder="Escriba nombre o CI..."
-                  />
-                  <div className="quick-selects" style={{ marginTop: "5px" }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setModalReservaPresencial(false);
-                        abrirModalRegistrarCliente();
-                      }}
-                    >
-                      👤 Cliente nuevo (sin cuenta)
-                    </button>
-                  </div>
+      {(usuario.rol === "empleado" || usuario.rol === "administrador") && modalReservaPresencial && (
+        <div className="modal-overlay" onClick={() => setModalReservaPresencial(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "600px" }}>
+            <h3>➕ Registrar Reserva Presencial</h3>
+            <form onSubmit={handleReservaPresencial}>
+              <div className="form-group">
+                <label>Buscar cliente (nombre o CI)</label>
+                <input type="text" value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} placeholder="Escriba nombre o CI..." />
+                <div className="quick-selects" style={{ marginTop: "5px" }}>
+                  <button type="button" onClick={() => { setModalReservaPresencial(false); abrirModalRegistrarCliente(); }}>👤 Cliente nuevo (sin cuenta)</button>
                 </div>
-
-                {busquedaCliente.trim() !== "" && (
-                  <div
-                    style={{
-                      maxHeight: "150px",
-                      overflowY: "auto",
-                      background: "var(--color-bg-elevated)",
-                      borderRadius: "8px",
-                      border: "1px solid var(--color-border)",
-                      marginBottom: "15px",
-                    }}
-                  >
-                    {clientesFiltrados.length === 0 ? (
-                      <p
-                        style={{
-                          padding: "10px",
-                          color: "var(--color-text-dim)",
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        No se encontraron clientes.
-                      </p>
-                    ) : (
-                      clientesFiltrados.map((c) => (
-                        <div
-                          key={c.id_cliente}
-                          onClick={() => {
-                            setPresIdCliente(String(c.id_cliente));
-                            setBusquedaCliente(
-                              `${c.nombre_completo} (CI: ${c.ci})`
-                            );
-                          }}
-                          style={{
-                            padding: "10px 12px",
-                            cursor: "pointer",
-                            borderBottom: "1px solid var(--color-border)",
-                            fontSize: "0.9rem",
-                          }}
-                        >
-                          <strong>{c.nombre_completo}</strong> — CI: {c.ci}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {presIdCliente && (
-                  <div
-                    style={{
-                      marginBottom: "15px",
-                      fontSize: "0.85rem",
-                      color: "var(--color-success)",
-                    }}
-                  >
-                    ✓ Cliente seleccionado (ID: {presIdCliente})
-                  </div>
-                )}
-
-                <div className="form-group">
-                  <label>Cancha</label>
-                  <select
-                    value={presIdCancha}
-                    onChange={(e) => setPresIdCancha(e.target.value)}
-                    required
-                  >
-                    <option value="">Seleccione una cancha</option>
-                    {canchas.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        #{c.id} - {c.nombre} - Bs {c.precio_hora}/h
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Fecha</label>
-                  <input
-                    type="date"
-                    value={presFecha}
-                    onChange={(e) => setPresFecha(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Hora de inicio</label>
-                  <input
-                    type="time"
-                    value={presHora}
-                    onChange={(e) => setPresHora(e.target.value)}
-                    min="06:00"
-                    max="23:00"
-                    required
-                  />
-                  <small className="hora-hint">🕐 Horario: 06:00 a 23:00</small>
-                </div>
-                <div className="form-group">
-                  <label>Duración (h)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="1"
-                    max="4"
-                    value={presDuracion}
-                    onChange={(e) => setPresDuracion(e.target.value)}
-                    required
-                  />
-                  <div className="quick-selects">
-                    {DURACIONES_COMUNES.map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => setPresDuracion(String(d))}
-                      >
-                        {d}h
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>Método de pago</label>
-                  <select
-                    value={presMetodoPago}
-                    onChange={(e) => setPresMetodoPago(e.target.value)}
-                    required
-                  >
-                    <option value="efectivo">💵 Efectivo</option>
-                    <option value="tarjeta">💳 Tarjeta</option>
-                    <option value="transferencia">🏦 Transferencia</option>
-                    <option value="qr">📱 QR</option>
-                  </select>
-                </div>
-                <div className="modal-actions">
-                  <button
-                    type="submit"
-                    className="btn-success"
-                    disabled={!presIdCliente}
-                  >
-                    Confirmar y Cobrar
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setModalReservaPresencial(false)}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </form>
-              {presMensaje && (
-                <div className={`mensaje ${presMensaje.tipo}`}>
-                  {presMensaje.texto}
+              </div>
+              {busquedaCliente.trim() !== "" && (
+                <div style={{ maxHeight: "150px", overflowY: "auto", background: "var(--color-bg-elevated)", borderRadius: "8px", border: "1px solid var(--color-border)", marginBottom: "15px" }}>
+                  {clientesFiltrados.length === 0 ? (
+                    <p style={{ padding: "10px", color: "var(--color-text-dim)", fontSize: "0.9rem" }}>No se encontraron clientes.</p>
+                  ) : (
+                    clientesFiltrados.map((c) => (
+                      <div key={c.id_cliente} onClick={() => { setPresIdCliente(String(c.id_cliente)); setBusquedaCliente(`${c.nombre_completo} (CI: ${c.ci})`); }}
+                        style={{ padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid var(--color-border)", fontSize: "0.9rem" }}>
+                        <strong>{c.nombre_completo}</strong> — CI: {c.ci}
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
-            </div>
+              {presIdCliente && <div style={{ marginBottom: "15px", fontSize: "0.85rem", color: "var(--color-success)" }}>✓ Cliente seleccionado (ID: {presIdCliente})</div>}
+              <div className="form-group">
+                <label>Cancha</label>
+                <select value={presIdCancha} onChange={(e) => setPresIdCancha(e.target.value)} required>
+                  <option value="">Seleccione una cancha</option>
+                  {canchas.map((c) => <option key={c.id} value={c.id}>#{c.id} - {c.nombre} - Bs {c.precio_hora}/h</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Fecha</label>
+                <input type="date" value={presFecha} onChange={(e) => setPresFecha(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>Hora de inicio</label>
+                <input type="time" value={presHora} onChange={(e) => setPresHora(e.target.value)} min="06:00" max="23:00" required />
+                <small className="hora-hint">🕐 Horario: 06:00 a 23:00</small>
+              </div>
+              <div className="form-group">
+                <label>Duración (h)</label>
+                <input type="number" step="0.5" min="1" max="4" value={presDuracion} onChange={(e) => setPresDuracion(e.target.value)} required />
+                <div className="quick-selects">
+                  {DURACIONES_COMUNES.map((d) => <button key={d} type="button" onClick={() => setPresDuracion(String(d))}>{d}h</button>)}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Método de pago</label>
+                <select value={presMetodoPago} onChange={(e) => setPresMetodoPago(e.target.value)} required>
+                  <option value="efectivo">💵 Efectivo</option>
+                  <option value="tarjeta">💳 Tarjeta</option>
+                  <option value="transferencia">🏦 Transferencia</option>
+                  <option value="qr">📱 QR</option>
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button type="submit" className="btn-success" disabled={!presIdCliente}>Confirmar y Cobrar</button>
+                <button type="button" className="btn-secondary" onClick={() => setModalReservaPresencial(false)}>Cerrar</button>
+              </div>
+            </form>
+            {presMensaje && <div className={`mensaje ${presMensaje.tipo}`}>{presMensaje.texto}</div>}
           </div>
-        )}
+        </div>
+      )}
 
       {/* MODAL: REGISTRAR CLIENTE NUEVO */}
-      {(usuario.rol === "empleado" || usuario.rol === "administrador") &&
-        modalRegistrarCliente && (
-          <div
-            className="modal-overlay"
-            onClick={() => setModalRegistrarCliente(false)}
-          >
-            <div
-              className="modal"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: "550px" }}
-            >
-              <h3>👤 Registrar Cliente Nuevo</h3>
-              <p
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--color-text-dim)",
-                  marginBottom: "15px",
-                }}
-              >
-                El cliente podrá iniciar sesión con el usuario y contraseña que
-                le asignes.
-              </p>
-              <form onSubmit={handleRegistrarCliente}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "10px",
-                  }}
-                >
-                  <div className="form-group">
-                    <label>Nombre *</label>
-                    <input
-                      type="text"
-                      value={regNombre}
-                      onChange={(e) => setRegNombre(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Apellido *</label>
-                    <input
-                      type="text"
-                      value={regApellido}
-                      onChange={(e) => setRegApellido(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>CI *</label>
-                  <input
-                    type="text"
-                    value={regCi}
-                    onChange={(e) => setRegCi(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Celular</label>
-                  <input
-                    type="text"
-                    value={regCelular}
-                    onChange={(e) => setRegCelular(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                  />
-                </div>
-                <hr
-                  style={{
-                    border: "none",
-                    borderTop: "1px solid var(--color-border)",
-                    margin: "15px 0",
-                  }}
-                />
-                <div className="form-group">
-                  <label>Usuario *</label>
-                  <input
-                    type="text"
-                    value={regUsername}
-                    onChange={(e) => setRegUsername(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Contraseña *</label>
-                  <input
-                    type="text"
-                    value={regContrasena}
-                    onChange={(e) => setRegContrasena(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="modal-actions">
-                  <button type="submit" className="btn-success">
-                    Registrar Cliente
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setModalRegistrarCliente(false)}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </form>
-              {regMensaje && (
-                <div className={`mensaje ${regMensaje.tipo}`}>
-                  {regMensaje.texto}
-                </div>
-              )}
-            </div>
+      {(usuario.rol === "empleado" || usuario.rol === "administrador") && modalRegistrarCliente && (
+        <div className="modal-overlay" onClick={() => setModalRegistrarCliente(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "550px" }}>
+            <h3>👤 Registrar Cliente Nuevo</h3>
+            <p style={{ fontSize: "0.85rem", color: "var(--color-text-dim)", marginBottom: "15px" }}>El cliente podrá iniciar sesión con el usuario y contraseña que le asignes.</p>
+            <form onSubmit={handleRegistrarCliente}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div className="form-group"><label>Nombre *</label><input type="text" value={regNombre} onChange={(e) => setRegNombre(e.target.value)} required /></div>
+                <div className="form-group"><label>Apellido *</label><input type="text" value={regApellido} onChange={(e) => setRegApellido(e.target.value)} required /></div>
+              </div>
+              <div className="form-group"><label>CI *</label><input type="text" value={regCi} onChange={(e) => setRegCi(e.target.value)} required /></div>
+              <div className="form-group"><label>Celular</label><input type="text" value={regCelular} onChange={(e) => setRegCelular(e.target.value)} /></div>
+              <div className="form-group"><label>Email</label><input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} /></div>
+              <hr style={{ border: "none", borderTop: "1px solid var(--color-border)", margin: "15px 0" }} />
+              <div className="form-group"><label>Usuario *</label><input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} required /></div>
+              <div className="form-group"><label>Contraseña *</label><input type="text" value={regContrasena} onChange={(e) => setRegContrasena(e.target.value)} required /></div>
+              <div className="modal-actions">
+                <button type="submit" className="btn-success">Registrar Cliente</button>
+                <button type="button" className="btn-secondary" onClick={() => setModalRegistrarCliente(false)}>Cerrar</button>
+              </div>
+            </form>
+            {regMensaje && <div className={`mensaje ${regMensaje.tipo}`}>{regMensaje.texto}</div>}
           </div>
-        )}
+        </div>
+      )}
 
       {/* MODAL: CREAR BLOQUEO */}
       {usuario.rol === "administrador" && modalBloqueo && (
@@ -2437,108 +1199,30 @@ function App() {
             <form onSubmit={handleCrearBloqueo}>
               <div className="form-group">
                 <label>Cancha</label>
-                <select
-                  value={bloIdCancha}
-                  onChange={(e) => setBloIdCancha(e.target.value)}
-                  required
-                >
+                <select value={bloIdCancha} onChange={(e) => setBloIdCancha(e.target.value)} required>
                   <option value="">Seleccione una cancha</option>
-                  {canchas.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      #{c.id} - {c.nombre}
-                    </option>
-                  ))}
+                  {canchas.map((c) => <option key={c.id} value={c.id}>#{c.id} - {c.nombre}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label>Fecha de inicio</label>
-                <input
-                  type="date"
-                  value={bloFechaInicio}
-                  onChange={(e) => setBloFechaInicio(e.target.value)}
-                  required
-                />
+              <div className="form-group"><label>Fecha de inicio</label><input type="date" value={bloFechaInicio} onChange={(e) => setBloFechaInicio(e.target.value)} required /></div>
+              <div className="form-group"><label>Fecha de fin</label><input type="date" value={bloFechaFin} onChange={(e) => setBloFechaFin(e.target.value)} required /></div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div className="form-group"><label>Hora inicio</label><input type="time" value={bloHoraInicio} onChange={(e) => setBloHoraInicio(e.target.value)} min="06:00" max="23:00" required /></div>
+                <div className="form-group"><label>Hora fin</label><input type="time" value={bloHoraFin} onChange={(e) => setBloHoraFin(e.target.value)} min="06:00" max="23:00" required /></div>
               </div>
-              <div className="form-group">
-                <label>Fecha de fin</label>
-                <input
-                  type="date"
-                  value={bloFechaFin}
-                  onChange={(e) => setBloFechaFin(e.target.value)}
-                  required
-                />
-              </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "10px",
-                }}
-              >
-                <div className="form-group">
-                  <label>Hora inicio</label>
-                  <input
-                    type="time"
-                    value={bloHoraInicio}
-                    onChange={(e) => setBloHoraInicio(e.target.value)}
-                    min="06:00"
-                    max="23:00"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Hora fin</label>
-                  <input
-                    type="time"
-                    value={bloHoraFin}
-                    onChange={(e) => setBloHoraFin(e.target.value)}
-                    min="06:00"
-                    max="23:00"
-                    required
-                  />
-                </div>
-              </div>
-              <small className="hora-hint">
-                🕐 Horario permitido: 06:00 a 23:00
-              </small>
+              <small className="hora-hint">🕐 Horario permitido: 06:00 a 23:00</small>
               <div className="form-group" style={{ marginTop: "10px" }}>
                 <label>Motivo del bloqueo</label>
-                <textarea
-                  value={bloMotivo}
-                  onChange={(e) => setBloMotivo(e.target.value)}
-                  placeholder="Ej: Mantenimiento del césped..."
-                  required
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "8px",
-                    padding: "10px 12px",
-                    color: "var(--color-text)",
-                    fontFamily: "inherit",
-                    fontSize: "0.95rem",
-                    minHeight: "70px",
-                    resize: "vertical",
-                  }}
+                <textarea value={bloMotivo} onChange={(e) => setBloMotivo(e.target.value)} placeholder="Ej: Mantenimiento del césped..." required
+                  style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px 12px", color: "var(--color-text)", fontFamily: "inherit", fontSize: "0.95rem", minHeight: "70px", resize: "vertical" }}
                 />
               </div>
               <div className="modal-actions">
-                <button type="submit" className="btn-warning">
-                  Confirmar bloqueo
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setModalBloqueo(false)}
-                >
-                  Cancelar
-                </button>
+                <button type="submit" className="btn-warning">Confirmar bloqueo</button>
+                <button type="button" className="btn-secondary" onClick={() => setModalBloqueo(false)}>Cancelar</button>
               </div>
             </form>
-            {bloMensaje && (
-              <div className={`mensaje ${bloMensaje.tipo}`}>
-                {bloMensaje.texto}
-              </div>
-            )}
+            {bloMensaje && <div className={`mensaje ${bloMensaje.tipo}`}>{bloMensaje.texto}</div>}
           </div>
         </div>
       )}
@@ -2546,131 +1230,41 @@ function App() {
       {/* MODAL: CREAR/EDITAR CANCHA */}
       {usuario.rol === "administrador" && modalCancha && (
         <div className="modal-overlay" onClick={() => setModalCancha(false)}>
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "550px" }}
-          >
-            <h3>
-              {canchaEditando
-                ? `✏️ Editar Cancha #${canchaEditando.id}`
-                : "➕ Nueva Cancha"}
-            </h3>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "550px" }}>
+            <h3>{canchaEditando ? `✏️ Editar Cancha #${canchaEditando.id}` : "➕ Nueva Cancha"}</h3>
             <form onSubmit={handleGuardarCancha}>
-              <div className="form-group">
-                <label>Nombre *</label>
-                <input
-                  type="text"
-                  value={canFormNombre}
-                  onChange={(e) => setCanFormNombre(e.target.value)}
-                  required
-                />
-              </div>
+              <div className="form-group"><label>Nombre *</label><input type="text" value={canFormNombre} onChange={(e) => setCanFormNombre(e.target.value)} required /></div>
               <div className="form-group">
                 <label>Tipo de deporte *</label>
-                <input
-                  type="text"
-                  value={canFormDeporte}
-                  onChange={(e) => setCanFormDeporte(e.target.value)}
-                  required
-                />
+                <input type="text" value={canFormDeporte} onChange={(e) => setCanFormDeporte(e.target.value)} required />
                 <div className="quick-selects">
-                  {["Fútbol", "Básquet", "Vóley", "Tenis", "Futsal"].map(
-                    (d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => setCanFormDeporte(d)}
-                      >
-                        {d}
-                      </button>
-                    )
-                  )}
+                  {["Fútbol", "Básquet", "Vóley", "Tenis", "Futsal"].map((d) => <button key={d} type="button" onClick={() => setCanFormDeporte(d)}>{d}</button>)}
                 </div>
               </div>
-              <div className="form-group">
-                <label>Precio por hora (Bs) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={canFormPrecio}
-                  onChange={(e) => setCanFormPrecio(e.target.value)}
-                  required
-                />
-              </div>
+              <div className="form-group"><label>Precio por hora (Bs) *</label><input type="number" step="0.01" min="0.01" value={canFormPrecio} onChange={(e) => setCanFormPrecio(e.target.value)} required /></div>
               <div className="form-group">
                 <label>Categoría *</label>
-                <select
-                  value={canFormCategoria}
-                  onChange={(e) => setCanFormCategoria(e.target.value)}
-                  required
-                >
+                <select value={canFormCategoria} onChange={(e) => setCanFormCategoria(e.target.value)} required>
                   <option value="">Seleccione una categoría</option>
-                  {categorias.map((cat) => (
-                    <option key={cat.id_categoria} value={cat.id_categoria}>
-                      {cat.nombre}
-                    </option>
-                  ))}
+                  {categorias.map((cat) => <option key={cat.id_categoria} value={cat.id_categoria}>{cat.nombre}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label>Ubicación</label>
-                <input
-                  type="text"
-                  value={canFormUbicacion}
-                  onChange={(e) => setCanFormUbicacion(e.target.value)}
-                  placeholder="Ej: Zona Norte"
-                />
-              </div>
+              <div className="form-group"><label>Ubicación</label><input type="text" value={canFormUbicacion} onChange={(e) => setCanFormUbicacion(e.target.value)} placeholder="Ej: Zona Norte" /></div>
               <div className="form-group">
                 <label>Superficie</label>
-                <input
-                  type="text"
-                  value={canFormSuperficie}
-                  onChange={(e) => setCanFormSuperficie(e.target.value)}
-                  placeholder="Ej: Sintética, Césped natural"
-                />
+                <input type="text" value={canFormSuperficie} onChange={(e) => setCanFormSuperficie(e.target.value)} placeholder="Ej: Sintética, Césped natural" />
                 <div className="quick-selects">
-                  {["Sintética", "Césped Natural", "Cemento", "Madera"].map(
-                    (s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setCanFormSuperficie(s)}
-                      >
-                        {s}
-                      </button>
-                    )
-                  )}
+                  {["Sintética", "Césped Natural", "Cemento", "Madera"].map((s) => <button key={s} type="button" onClick={() => setCanFormSuperficie(s)}>{s}</button>)}
                 </div>
               </div>
-              <div
-                className="form-group"
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: "10px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  id="techada"
-                  checked={canFormTechada}
-                  onChange={(e) => setCanFormTechada(e.target.checked)}
-                  style={{ width: "auto" }}
-                />
-                <label htmlFor="techada" style={{ marginBottom: 0 }}>
-                  Techada
-                </label>
+              <div className="form-group" style={{ flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                <input type="checkbox" id="techada" checked={canFormTechada} onChange={(e) => setCanFormTechada(e.target.checked)} style={{ width: "auto" }} />
+                <label htmlFor="techada" style={{ marginBottom: 0 }}>Techada</label>
               </div>
               {canchaEditando && (
                 <div className="form-group">
                   <label>Estado</label>
-                  <select
-                    value={canFormEstado}
-                    onChange={(e) => setCanFormEstado(e.target.value)}
-                  >
+                  <select value={canFormEstado} onChange={(e) => setCanFormEstado(e.target.value)}>
                     <option value="disponible">Disponible</option>
                     <option value="mantenimiento">Mantenimiento</option>
                     <option value="fuera_servicio">Fuera de servicio</option>
@@ -2678,23 +1272,11 @@ function App() {
                 </div>
               )}
               <div className="modal-actions">
-                <button type="submit" className="btn-success">
-                  Guardar
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setModalCancha(false)}
-                >
-                  Cancelar
-                </button>
+                <button type="submit" className="btn-success">Guardar</button>
+                <button type="button" className="btn-secondary" onClick={() => setModalCancha(false)}>Cancelar</button>
               </div>
             </form>
-            {canMensaje && (
-              <div className={`mensaje ${canMensaje.tipo}`}>
-                {canMensaje.texto}
-              </div>
-            )}
+            {canMensaje && <div className={`mensaje ${canMensaje.tipo}`}>{canMensaje.texto}</div>}
           </div>
         </div>
       )}
@@ -2703,67 +1285,27 @@ function App() {
       {usuario.rol === "administrador" && modalCategoria && (
         <div className="modal-overlay" onClick={() => setModalCategoria(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              {catEditando ? "✏️ Editar Categoría" : "➕ Nueva Categoría"}
-            </h3>
+            <h3>{catEditando ? "✏️ Editar Categoría" : "➕ Nueva Categoría"}</h3>
             <form onSubmit={handleGuardarCategoria}>
               <div className="form-group">
                 <label>Nombre *</label>
-                <input
-                  type="text"
-                  value={catFormNombre}
-                  onChange={(e) => setCatFormNombre(e.target.value)}
-                  required
-                />
+                <input type="text" value={catFormNombre} onChange={(e) => setCatFormNombre(e.target.value)} required />
                 <div className="quick-selects">
-                  {["Fútbol", "Básquet", "Vóley", "Tenis"].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setCatFormNombre(n)}
-                    >
-                      {n}
-                    </button>
-                  ))}
+                  {["Fútbol", "Básquet", "Vóley", "Tenis"].map((n) => <button key={n} type="button" onClick={() => setCatFormNombre(n)}>{n}</button>)}
                 </div>
               </div>
               <div className="form-group">
                 <label>Descripción</label>
-                <textarea
-                  value={catFormDescripcion}
-                  onChange={(e) => setCatFormDescripcion(e.target.value)}
-                  placeholder="Descripción de la categoría..."
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "8px",
-                    padding: "10px 12px",
-                    color: "var(--color-text)",
-                    fontFamily: "inherit",
-                    fontSize: "0.95rem",
-                    minHeight: "70px",
-                    resize: "vertical",
-                  }}
+                <textarea value={catFormDescripcion} onChange={(e) => setCatFormDescripcion(e.target.value)} placeholder="Descripción de la categoría..."
+                  style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px 12px", color: "var(--color-text)", fontFamily: "inherit", fontSize: "0.95rem", minHeight: "70px", resize: "vertical" }}
                 />
               </div>
               <div className="modal-actions">
-                <button type="submit" className="btn-success">
-                  Guardar
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setModalCategoria(false)}
-                >
-                  Cancelar
-                </button>
+                <button type="submit" className="btn-success">Guardar</button>
+                <button type="button" className="btn-secondary" onClick={() => setModalCategoria(false)}>Cancelar</button>
               </div>
             </form>
-            {catMensaje && (
-              <div className={`mensaje ${catMensaje.tipo}`}>
-                {catMensaje.texto}
-              </div>
-            )}
+            {catMensaje && <div className={`mensaje ${catMensaje.tipo}`}>{catMensaje.texto}</div>}
           </div>
         </div>
       )}
