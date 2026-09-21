@@ -3,9 +3,12 @@ import threading
 import time
 from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+
+from extensions import db
 
 load_dotenv()
 
@@ -15,6 +18,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, allow_headers=["*"])
+db.init_app(app)
+CORS(app)
 
 # ============================================================
 # CONSTANTES DE NEGOCIO
@@ -815,6 +820,11 @@ def eliminar_cancha(id_cancha):
     cancha.estado = "fuera_servicio"
     db.session.commit()
     return jsonify({"mensaje": "Cancha desactivada (fuera de servicio)"}), 200
+
+# Ver auth/LEEME.txt
+from auth import register_auth
+register_auth(app)
+
 
 if __name__ == "__main__":
     worker = threading.Thread(target=background_worker, daemon=True)
