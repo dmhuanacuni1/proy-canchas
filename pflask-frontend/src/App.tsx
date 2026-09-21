@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import "./App.css";
@@ -17,6 +18,12 @@ interface Cancha {
   id_categoria?: number;
   categoria?: string;
 }
+=======
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import CanchasPage from './pages/CanchasPage';
+import MisReservasPage from './pages/MisReservasPage';
+import ReservaFormPage from './pages/ReservaFormPage';
+>>>>>>> 61817e6c345aa0b29aa1f0986acaaba9b1dbf4db
 
 interface Reserva {
   id_reserva: number;
@@ -92,6 +99,7 @@ const DURACIONES_COMUNES = [1, 1.5, 2, 2.5, 3, 4];
 // APP
 // ============================================================
 function App() {
+<<<<<<< HEAD
   // REFS para scroll automático
   const gestionCanchasRef = useRef<HTMLDivElement>(null);
   const gestionCategoriasRef = useRef<HTMLDivElement>(null);
@@ -2772,3 +2780,20 @@ function App() {
 }
 
 export default App;
+=======
+  return (
+    <BrowserRouter>
+      <nav style={{ padding: '10px', background: '#eee' }}>
+        <Link to="/" style={{ marginRight: '10px' }}>Canchas</Link>
+        <Link to="/mis-reservas">Mis Reservas</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<CanchasPage />} />
+        <Route path="/reservar/:idCancha" element={<ReservaFormPage />} />
+        <Route path="/mis-reservas" element={<MisReservasPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+export default App;
+>>>>>>> 61817e6c345aa0b29aa1f0986acaaba9b1dbf4db
