@@ -118,6 +118,9 @@ def convertir_precio(valor):
     except (InvalidOperation, ValueError):
         raise ValueError("precio_hora debe ser un número válido.")
 
+    if not precio.is_finite():
+        raise ValueError("precio_hora debe ser un número finito.")
+
     if precio <= 0:
         raise ValueError("precio_hora debe ser mayor que 0.")
 
@@ -128,10 +131,13 @@ def convertir_id_entero(valor, nombre):
     if valor is None or valor == "":
         raise ValueError(f"{nombre} es obligatorio.")
 
-    try:
-        return int(valor)
-    except (TypeError, ValueError):
+    if isinstance(valor, bool) or not isinstance(valor, int):
         raise ValueError(f"{nombre} debe ser un número entero.")
+
+    if valor <= 0:
+        raise ValueError(f"{nombre} debe ser mayor que 0.")
+
+    return valor
 
 
 def convertir_bool(valor, nombre="techada"):
@@ -226,10 +232,27 @@ def inicio():
 
 @app.post("/api/categorias")
 def crear_categoria():
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(silent=True)
 
-    nombre = str(data.get("nombre", "")).strip()
+    if not isinstance(data, dict):
+        return error_json(
+            "El cuerpo de la solicitud debe ser un objeto JSON válido."
+        )
+
+    if not data:
+        return error_json(
+            "El cuerpo de la solicitud no puede estar vacío."
+        )
+
+    nombre = data.get("nombre")
     descripcion = data.get("descripcion")
+
+    if not isinstance(nombre, str):
+        return error_json(
+            "El campo nombre debe ser un texto válido."
+        )
+
+    nombre = nombre.strip()
 
     if not nombre:
         return error_json(
@@ -239,6 +262,11 @@ def crear_categoria():
     if len(nombre) > 50:
         return error_json(
             "El nombre de la categoría no puede superar 50 caracteres."
+        )
+
+    if descripcion is not None and not isinstance(descripcion, str):
+        return error_json(
+            "La descripción debe ser un texto válido o null."
         )
 
     try:
@@ -255,7 +283,7 @@ def crear_categoria():
         nueva_categoria = Categoria(
             nombre=nombre,
             descripcion=(
-                str(descripcion).strip()
+                descripcion.strip()
                 if descripcion is not None
                 else None
             ),
@@ -309,6 +337,11 @@ def obtener_categorias():
 
 @app.get("/api/categorias/<int:id_categoria>")
 def obtener_categoria(id_categoria):
+    if id_categoria <= 0:
+        return error_json(
+            "El id_categoria debe ser mayor que 0."
+        )
+
     categoria = db.session.get(Categoria, id_categoria)
 
     if not categoria:
@@ -322,6 +355,11 @@ def obtener_categoria(id_categoria):
 
 @app.patch("/api/categorias/<int:id_categoria>")
 def modificar_categoria(id_categoria):
+    if id_categoria <= 0:
+        return error_json(
+            "El id_categoria debe ser mayor que 0."
+        )
+
     categoria = db.session.get(Categoria, id_categoria)
 
     if not categoria:
@@ -330,11 +368,26 @@ def modificar_categoria(id_categoria):
             codigo=404,
         )
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return error_json(
+            "El cuerpo de la solicitud debe ser un objeto JSON válido."
+        )
+
+    if not data:
+        return error_json(
+            "El cuerpo de la solicitud no puede estar vacío."
+        )
 
     try:
         if "nombre" in data:
-            nombre = str(data["nombre"]).strip()
+            if not isinstance(data["nombre"], str):
+                return error_json(
+                    "El nombre de la categoría debe ser un texto válido."
+                )
+
+            nombre = data["nombre"].strip()
 
             if not nombre:
                 return error_json(
@@ -360,8 +413,13 @@ def modificar_categoria(id_categoria):
             categoria.nombre = nombre
 
         if "descripcion" in data:
+            if data["descripcion"] is not None and not isinstance(data["descripcion"], str):
+                return error_json(
+                    "La descripción debe ser un texto válido o null."
+                )
+
             categoria.descripcion = (
-                str(data["descripcion"]).strip()
+                data["descripcion"].strip()
                 if data["descripcion"] is not None
                 else None
             )
@@ -392,6 +450,11 @@ def modificar_categoria(id_categoria):
 
 @app.delete("/api/categorias/<int:id_categoria>")
 def eliminar_categoria(id_categoria):
+    if id_categoria <= 0:
+        return error_json(
+            "El id_categoria debe ser mayor que 0."
+        )
+
     categoria = db.session.get(Categoria, id_categoria)
 
     if not categoria:
@@ -432,15 +495,70 @@ def eliminar_categoria(id_categoria):
 
 @app.post("/api/canchas")
 def crear_cancha():
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(silent=True)
 
-    nombre = str(data.get("nombre_cancha", "")).strip()
-    deporte = str(data.get("tipo_deporte", "")).strip()
+    if not isinstance(data, dict):
+        return error_json(
+            "El cuerpo de la solicitud debe ser un objeto JSON válido."
+        )
+
+    if not data:
+        return error_json(
+            "El cuerpo de la solicitud no puede estar vacío."
+        )
+
+    nombre = data.get("nombre_cancha")
+    deporte = data.get("tipo_deporte")
+
+    if not isinstance(nombre, str):
+        return error_json(
+            "nombre_cancha debe ser texto válido."
+        )
+    if not isinstance(deporte, str):
+        return error_json(
+            "tipo_deporte debe ser texto válido."
+        )
+
+    nombre = nombre.strip()
+    deporte = deporte.strip()
 
     if not nombre or not deporte:
         return error_json(
             "Campos obligatorios faltantes.",
             "Debe proporcionar nombre_cancha y tipo_deporte.",
+        )
+
+    if len(nombre) > 80:
+        return error_json(
+            "El nombre de la cancha no puede superar 80 caracteres."
+        )
+
+    if len(deporte) > 50:
+        return error_json(
+            "El tipo de deporte no puede superar 50 caracteres."
+        )
+
+    ubicacion = data.get("ubicacion")
+    superficie = data.get("superficie")
+
+    if ubicacion is not None and not isinstance(ubicacion, str):
+        return error_json(
+            "La ubicación debe ser un texto válido o null."
+        )
+
+    if superficie is not None and not isinstance(superficie, str):
+        return error_json(
+            "La superficie debe ser un texto válido o null."
+        )
+
+    if ubicacion is not None and len(ubicacion.strip()) > 150:
+        return error_json(
+            "La ubicación no puede superar 150 caracteres."
+        )
+
+    if superficie is not None and len(superficie.strip()) > 50:
+        return error_json(
+            "La superficie no puede superar 50 caracteres."
         )
 
     try:
@@ -459,9 +577,14 @@ def crear_cancha():
         obtener_categoria(id_categoria)
         obtener_administrador(id_administrador)
 
-        estado = str(
-            data.get("estado", "disponible")
-        ).strip().lower()
+        estado = data.get("estado", "disponible")
+
+        if not isinstance(estado, str):
+            return error_json(
+                "El estado debe ser un texto válido."
+            )
+
+        estado = estado.strip().lower()
 
         if estado not in ESTADOS_VALIDOS:
             return error_json(
@@ -478,14 +601,16 @@ def crear_cancha():
             tipo_deporte=deporte,
             precio_hora=precio,
             ubicacion=(
-                str(data.get("ubicacion", "")).strip()
-                or None
+                ubicacion.strip()
+                if ubicacion is not None and ubicacion.strip()
+                else None
             ),
             estado=estado,
             techada=techada,
             superficie=(
-                str(data.get("superficie", "")).strip()
-                or None
+                superficie.strip()
+                if superficie is not None and superficie.strip()
+                else None
             ),
             id_categoria=id_categoria,
             id_administrador=id_administrador,
@@ -562,6 +687,11 @@ def obtener_canchas():
 
 @app.get("/api/canchas/<int:id_cancha>")
 def obtener_cancha(id_cancha):
+    if id_cancha <= 0:
+        return error_json(
+            "El id_cancha debe ser mayor que 0."
+        )
+
     cancha = db.session.get(Cancha, id_cancha)
 
     if not cancha:
@@ -575,6 +705,11 @@ def obtener_cancha(id_cancha):
 
 @app.patch("/api/canchas/<int:id_cancha>")
 def modificar_cancha(id_cancha):
+    if id_cancha <= 0:
+        return error_json(
+            "El id_cancha debe ser mayor que 0."
+        )
+
     cancha = db.session.get(Cancha, id_cancha)
 
     if not cancha:
@@ -583,25 +718,55 @@ def modificar_cancha(id_cancha):
             codigo=404,
         )
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return error_json(
+            "El cuerpo de la solicitud debe ser un objeto JSON válido."
+        )
+
+    if not data:
+        return error_json(
+            "El cuerpo de la solicitud no puede estar vacío."
+        )
 
     try:
         if "nombre_cancha" in data:
-            nombre = str(data["nombre_cancha"]).strip()
+            if not isinstance(data["nombre_cancha"], str):
+                return error_json(
+                    "El nombre de la cancha debe ser un texto válido."
+                )
+
+            nombre = data["nombre_cancha"].strip()
 
             if not nombre:
                 return error_json(
                     "El nombre de la cancha no puede estar vacío."
                 )
 
+            if len(nombre) > 80:
+                return error_json(
+                    "El nombre de la cancha no puede superar 80 caracteres."
+                )
+
             cancha.nombre_cancha = nombre
 
         if "tipo_deporte" in data:
-            deporte = str(data["tipo_deporte"]).strip()
+            if not isinstance(data["tipo_deporte"], str):
+                return error_json(
+                    "El deporte debe ser un texto válido."
+                )
+
+            deporte = data["tipo_deporte"].strip()
 
             if not deporte:
                 return error_json(
                     "El deporte no puede estar vacío."
+                )
+
+            if len(deporte) > 50:
+                return error_json(
+                    "El tipo de deporte no puede superar 50 caracteres."
                 )
 
             cancha.tipo_deporte = deporte
@@ -612,15 +777,37 @@ def modificar_cancha(id_cancha):
             )
 
         if "ubicacion" in data:
+            if data["ubicacion"] is not None and not isinstance(data["ubicacion"], str):
+                return error_json(
+                    "La ubicación debe ser un texto válido o null."
+                )
+
+            if data["ubicacion"] is not None and len(data["ubicacion"].strip()) > 150:
+                return error_json(
+                    "La ubicación no puede superar 150 caracteres."
+                )
+
             cancha.ubicacion = (
-                str(data["ubicacion"]).strip()
-                or None
+                data["ubicacion"].strip()
+                if data["ubicacion"] is not None and data["ubicacion"].strip()
+                else None
             )
 
         if "superficie" in data:
+            if data["superficie"] is not None and not isinstance(data["superficie"], str):
+                return error_json(
+                    "La superficie debe ser un texto válido o null."
+                )
+
+            if data["superficie"] is not None and len(data["superficie"].strip()) > 50:
+                return error_json(
+                    "La superficie no puede superar 50 caracteres."
+                )
+
             cancha.superficie = (
-                str(data["superficie"]).strip()
-                or None
+                data["superficie"].strip()
+                if data["superficie"] is not None and data["superficie"].strip()
+                else None
             )
 
         if "techada" in data:
@@ -629,9 +816,12 @@ def modificar_cancha(id_cancha):
             )
 
         if "estado" in data:
-            estado = str(
-                data["estado"]
-            ).strip().lower()
+            if not isinstance(data["estado"], str):
+                return error_json(
+                    "El estado debe ser un texto válido."
+                )
+
+            estado = data["estado"].strip().lower()
 
             if estado not in ESTADOS_VALIDOS:
                 return error_json(
@@ -693,6 +883,11 @@ def modificar_cancha(id_cancha):
 
 @app.delete("/api/canchas/<int:id_cancha>")
 def eliminar_cancha(id_cancha):
+    if id_cancha <= 0:
+        return error_json(
+            "El id_cancha debe ser mayor que 0."
+        )
+
     cancha = db.session.get(Cancha, id_cancha)
 
     if not cancha:
@@ -730,6 +925,11 @@ def eliminar_cancha(id_cancha):
 
 @app.patch("/api/canchas/<int:id_cancha>/estado")
 def cambiar_estado_cancha(id_cancha):
+    if id_cancha <= 0:
+        return error_json(
+            "El id_cancha debe ser mayor que 0."
+        )
+
     cancha = db.session.get(Cancha, id_cancha)
 
     if not cancha:
@@ -738,8 +938,26 @@ def cambiar_estado_cancha(id_cancha):
             codigo=404,
         )
 
-    data = request.get_json(silent=True) or {}
-    estado = str(data.get("estado", "")).strip().lower()
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return error_json(
+            "El cuerpo de la solicitud debe ser un objeto JSON válido."
+        )
+
+    if not data:
+        return error_json(
+            "El cuerpo de la solicitud no puede estar vacío."
+        )
+
+    estado = data.get("estado")
+
+    if not isinstance(estado, str):
+        return error_json(
+            "El estado debe ser un texto válido."
+        )
+
+    estado = estado.strip().lower()
 
     if estado not in ESTADOS_VALIDOS:
         return error_json(
