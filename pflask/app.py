@@ -3,12 +3,12 @@ import threading
 import time
 from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
 from extensions import db
+from auth.models import Persona, Usuario, Cliente, Administrador, Empleado
 
 load_dotenv()
 
@@ -16,7 +16,6 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, allow_headers=["*"])
 db.init_app(app)
 CORS(app)
@@ -26,41 +25,6 @@ CORS(app)
 # ============================================================
 HORA_APERTURA = datetime.strptime("06:00", "%H:%M").time()
 HORA_CIERRE = datetime.strptime("23:00", "%H:%M").time()
-
-# ============================================================
-# MODELOS (Eliminado Auditoria)
-# ============================================================
-class Persona(db.Model):
-    __tablename__ = "persona"
-    id_persona = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(80), nullable=False)
-    apellido = db.Column(db.String(80), nullable=False)
-    ci = db.Column(db.String(20), nullable=False, unique=True)
-    celular = db.Column(db.String(20))
-    email = db.Column(db.String(120), unique=True)
-
-class Usuario(db.Model):
-    __tablename__ = "usuario"
-    id_usuario = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), nullable=False, unique=True)
-    contrasena = db.Column(db.String(255), nullable=False)
-    rol = db.Column(db.String(20), nullable=False)
-    id_persona = db.Column(db.Integer, nullable=False)
-
-class Cliente(db.Model):
-    __tablename__ = "cliente"
-    id_cliente = db.Column(db.Integer, primary_key=True)
-    id_usuario = db.Column(db.Integer, nullable=False, unique=True)
-
-class Administrador(db.Model):
-    __tablename__ = "administrador"
-    id_administrador = db.Column(db.Integer, primary_key=True)
-    id_usuario = db.Column(db.Integer, nullable=False, unique=True)
-
-class Empleado(db.Model):
-    __tablename__ = "empleado"
-    id_empleado = db.Column(db.Integer, primary_key=True)
-    id_usuario = db.Column(db.Integer, unique=True)
 
 class Categoria(db.Model):
     __tablename__ = "categoria"
