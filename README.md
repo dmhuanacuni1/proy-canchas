@@ -61,3 +61,97 @@ FRONTEND_URL=http://localhost:5173
 SECRET_KEY=dev-secret-canchas-local
 
 3. Guardar y reiniciar Flask.
+
+
+
+
+
+
+
+
+Iteracion: Gestion de Reservas
+se modifico la base de datos por motivos de necesidad
+
+
+-- =====================================================================
+-- SCRIPT DE ACTUALIZACIÓN
+-- Iteración: Gestión de Reservas
+-- Ejecutar sobre la BD ya existente (NO recrea nada)
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 1. CREAR TABLA BLOQUEO
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bloqueo (
+    id_bloqueo       SERIAL PRIMARY KEY,
+    fecha_inicio     DATE NOT NULL,
+    fecha_fin        DATE NOT NULL,
+    hora_inicio      TIME NOT NULL,
+    hora_fin         TIME NOT NULL,
+    motivo           TEXT NOT NULL,
+    estado           VARCHAR(20) NOT NULL DEFAULT 'activo',
+    id_cancha        INTEGER NOT NULL 
+        REFERENCES cancha(id_cancha) ON DELETE CASCADE ON UPDATE CASCADE,
+    id_administrador INTEGER NOT NULL 
+        REFERENCES administrador(id_administrador) ON DELETE RESTRICT ON UPDATE CASCADE,
+    fecha_creacion   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_bloqueo_horas  CHECK (hora_fin > hora_inicio),
+    CONSTRAINT chk_bloqueo_fechas CHECK (fecha_fin >= fecha_inicio),
+    CONSTRAINT chk_bloqueo_estado CHECK (estado IN ('activo', 'inactivo'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_bloqueo_cancha_fecha 
+    ON bloqueo (id_cancha, fecha_inicio, fecha_fin);
+
+CREATE INDEX IF NOT EXISTS idx_bloqueo_estado 
+    ON bloqueo (estado);
+
+-- ---------------------------------------------------------------------
+-- 2. ACTUALIZAR EL CHECK DE ESTADOS DE RESERVA
+-- ---------------------------------------------------------------------
+ALTER TABLE reserva DROP CONSTRAINT IF EXISTS chk_reserva_estado;
+
+ALTER TABLE reserva ADD CONSTRAINT chk_reserva_estado 
+    CHECK (estado_reserva IN (
+        'pendiente', 
+        'confirmada', 
+        'cancelada', 
+        'completada',
+        'expirada'     
+    ));
+
+-- ---------------------------------------------------------------------
+-- 3. ACTUALIZAR EL CHECK DE ESTADOS DE CANCHA
+-- ---------------------------------------------------------------------
+ALTER TABLE cancha DROP CONSTRAINT IF EXISTS chk_cancha_estado;
+
+ALTER TABLE cancha ADD CONSTRAINT chk_cancha_estado 
+    CHECK (estado IN ('disponible', 'fuera_servicio'));
+
+-- Convertir cualquier cancha con estado antiguo 'mantenimiento' a 'disponible'
+-- (los mantenimientos ahora son bloqueos con fecha de fin)
+UPDATE cancha SET estado = 'disponible' WHERE estado = 'mantenimiento';
+
+-- ---------------------------------------------------------------------
+-- 4. ÍNDICES ADICIONALES PARA RESERVA
+-- ---------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_reserva_cancha_fecha 
+    ON reserva (id_cancha, fecha_reserva);
+
+CREATE INDEX IF NOT EXISTS idx_reserva_estado 
+    ON reserva (estado_reserva);
+
+CREATE INDEX IF NOT EXISTS idx_reserva_fecha_creacion 
+    ON reserva (fecha_creacion);
+
+-- =====================================================================
+-- VERIFICACIÓN FINAL
+-- =====================================================================
+SELECT 
+    table_name AS "Tabla",
+    (SELECT COUNT(*) FROM information_schema.columns 
+     WHERE table_name = t.table_name AND table_schema = 'public') AS "Columnas"
+FROM information_schema.tables t
+WHERE table_schema = 'public' 
+  AND table_name IN ('bloqueo', 'reserva', 'cancha', 'categoria', 'pago')
+ORDER BY table_name;

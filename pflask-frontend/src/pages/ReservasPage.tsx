@@ -1,6 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import axios from "axios";
-import "./App.css";
+import "../App.css";
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // ============================================================
 // INTERFACES
@@ -61,39 +63,46 @@ interface Categoria {
   descripcion: string | null;
 }
 
-interface Usuario {
-  id_usuario: number;
-  username: string;
-  rol: string;
-  id_cliente: number | null;
-  id_administrador: number | null;
-  id_empleado: number | null;
-  nombre_completo: string;
-}
-
 // ============================================================
 // HELPERS
 // ============================================================
 const DURACIONES_COMUNES = [1, 1.5, 2, 2.5, 3, 4];
 
 // ============================================================
-// APP
+// COMPONENTE
 // ============================================================
-function App() {
+function ReservasPage() {
+  const navigate = useNavigate();
+  const { user, logout: authLogout } = useAuth();
+
+  // Mapeamos el usuario del AuthContext al formato que usaba el componente
+  const usuario = useMemo(() => {
+  if (!user) return null;
+  return {
+    id_usuario: user.id_usuario || user.id || 0,
+    username: user.username || '',
+    rol: user.rol || user.role || '',
+    id_cliente: user.id_cliente ?? null,
+    id_administrador: user.id_administrador ?? null,
+    id_empleado: user.id_empleado ?? null,
+    nombre_completo:
+      user.nombre_completo ||
+      `${user.nombre || ''} ${user.apellido || ''}`.trim() ||
+      user.username ||
+      'Usuario',
+  };
+}, [user]);
+
+  // Banderas de roles (unificadas)
+  const esCliente = usuario?.rol === 'cliente';
+  const esEmpleado = usuario?.rol === 'empleado';
+  const esAdmin = usuario?.rol === 'admin' || usuario?.rol === 'administrador';
+  const esStaff = esEmpleado || esAdmin;
+
   // REFS para scroll automático
   const gestionCanchasRef = useRef<HTMLDivElement>(null);
   const gestionCategoriasRef = useRef<HTMLDivElement>(null);
   const bloqueosRef = useRef<HTMLDivElement>(null);
-
-  // LOGIN
-  const [usuario, setUsuario] = useState<Usuario | null>(() => {
-    const saved = localStorage.getItem("usuario");
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [loginUsername, setLoginUsername] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [loginCargando, setLoginCargando] = useState(false);
 
   // GENERALES
   const [canchas, setCanchas] = useState<Cancha[]>([]);
@@ -130,7 +139,7 @@ function App() {
   const [modAdminDuracion, setModAdminDuracion] = useState("1");
   const [modAdminIdCancha, setModAdminIdCancha] = useState("");
 
-  // RF-10 (Presencial)
+  // RESERVA PRESENCIAL
   const [modalReservaPresencial, setModalReservaPresencial] = useState(false);
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [presIdCliente, setPresIdCliente] = useState("");
@@ -216,19 +225,18 @@ function App() {
   }, [verGestionCategorias]);
 
   // ============================================================
-  // INTERCEPTOR
+  // INTERCEPTOR JWT
   // ============================================================
   useEffect(() => {
     const interceptor = axios.interceptors.request.use((config) => {
-      if (usuario) {
-        config.headers["X-Usuario-Id"] = String(usuario.id_usuario);
-        config.headers["X-Username"] = usuario.username;
-        config.headers["X-Rol"] = usuario.rol;
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     });
     return () => axios.interceptors.request.eject(interceptor);
-  }, [usuario]);
+  }, []);
 
   // ============================================================
   // CARGA INICIAL
@@ -254,18 +262,19 @@ function App() {
   }, []);
 
   const cargarReservas = (filtro: "todas" | "vigentes" = filtroReservas) => {
-    if (!usuario || usuario.rol !== "cliente" || !usuario.id_cliente) return;
+    if (!usuario || !esCliente || !usuario.id_cliente) return;
     const url = filtro === "vigentes"
-        ? `http://127.0.0.1:5000/api/reservas/${usuario.id_cliente}/vigentes`
-        : `http://127.0.0.1:5000/api/reservas/${usuario.id_cliente}`;
+      ? `http://127.0.0.1:5000/api/reservas/${usuario.id_cliente}/vigentes`
+      : `http://127.0.0.1:5000/api/reservas/${usuario.id_cliente}`;
     axios.get<Reserva[]>(url)
       .then((res) => setReservas(res.data))
       .catch((err) => console.error(err));
   };
 
   useEffect(() => {
-    if (usuario && usuario.rol === "cliente") cargarReservas(filtroReservas);
-  }, [filtroReservas, usuario]);
+    if (usuario && esCliente) cargarReservas(filtroReservas);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtroReservas, usuario?.id_cliente]);
 
   const cargarReservasAdmin = () => {
     const params = new URLSearchParams();
@@ -289,65 +298,68 @@ function App() {
   };
 
   useEffect(() => {
-    if (usuario?.rol === "empleado" || usuario?.rol === "administrador") {
+    if (esStaff) {
       cargarReservasAdmin();
       cargarClientes();
     }
-    if (usuario?.rol === "administrador") {
-      cargarBloqueos();
-    }
-  }, [usuario, filtroFecha, filtroEstado]);
+    cargarBloqueos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario?.rol, filtroFecha, filtroEstado]);
 
   // ============================================================
-  // LOGIN
+  // LOGOUT (usa el del AuthContext)
   // ============================================================
-  const handleLogin = async (e: any) => {
-    e.preventDefault();
-    setLoginError("");
-    setLoginCargando(true);
-    try {
-      const res = await axios.post("http://127.0.0.1:5000/api/login", {
-        username: loginUsername, contrasena: loginPassword,
-      });
-      localStorage.setItem("usuario", JSON.stringify(res.data));
-      setUsuario(res.data);
-      setLoginUsername(""); setLoginPassword("");
-    } catch (err: any) {
-      setLoginError(err.response?.data?.error || "Error de conexión con el servidor.");
-    } finally {
-      setLoginCargando(false);
-    }
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem("usuario");
-    setUsuario(null);
-    setReservas([]); setReservasAdmin([]); setBloqueos([]);
-    setMensajeReserva(null); setFiltroReservas("todas");
-    setFiltroFecha(""); setFiltroEstado("");
-    setVerGestionCanchas(false); setVerGestionCategorias(false);
+    authLogout();
+    navigate('/login');
   };
 
+  // ============================================================
+  // ACCIONES CLIENTE
+  // ============================================================
   const handleReserva = async (e: any) => {
-    e.preventDefault();
-    if (!usuario || !usuario.id_cliente) return;
-    setMensajeReserva({ texto: "Procesando...", tipo: "info" });
+  e.preventDefault();
+  if (!usuario || !usuario.id_cliente) return;
 
-    try {
-      const response = await axios.post("http://127.0.0.1:5000/api/reservas", {
-        id_cancha: parseInt(idCancha), id_cliente: usuario.id_cliente,
-        fecha_reserva: fecha, hora_inicio: hora, duracion: parseFloat(duracion),
-      });
-      setMensajeReserva({
-        texto: `✅ ${response.data.mensaje} Monto a pagar: Bs ${response.data.monto_total}.`,
-        tipo: "success",
-      });
-      cargarReservas();
-    } catch (err: any) {
-      const msg = err.response?.data?.error || (err.request ? "Error de red." : "Error inesperado.");
-      setMensajeReserva({ texto: `❌ ${msg}`, tipo: "error" });
-    }
-  };
+  // ✅ VALIDACIÓN PREVIA: Verificar si la cancha está bloqueada en esa fecha
+  const bloqueoConflicto = bloqueos.find(
+    (b) =>
+      b.id_cancha === parseInt(idCancha) &&
+      b.estado === 'activo' &&
+      fecha >= b.fecha_inicio &&
+      fecha <= b.fecha_fin
+  );
+
+  if (bloqueoConflicto) {
+    setMensajeReserva({
+      texto: `❌ La cancha está bloqueada por "${bloqueoConflicto.motivo}" del ${bloqueoConflicto.fecha_inicio} al ${bloqueoConflicto.fecha_fin}. Puedes reservar después del ${bloqueoConflicto.fecha_fin}.`,
+      tipo: "error",
+    });
+    return;
+  }
+
+  setMensajeReserva({ texto: "Procesando...", tipo: "info" });
+
+  try {
+    const response = await axios.post("http://127.0.0.1:5000/api/reservas", {
+      id_cancha: parseInt(idCancha),
+      id_cliente: usuario.id_cliente,
+      fecha_reserva: fecha,
+      hora_inicio: hora,
+      duracion: parseFloat(duracion),
+    });
+    setMensajeReserva({
+      texto: `✅ ${response.data.mensaje} Monto a pagar: Bs ${response.data.monto_total}.`,
+      tipo: "success",
+    });
+    cargarReservas();
+  } catch (err: any) {
+    const msg =
+      err.response?.data?.error ||
+      (err.request ? "Error de red." : "Error inesperado.");
+    setMensajeReserva({ texto: `❌ ${msg}`, tipo: "error" });
+  }
+};
 
   const cancelarReserva = async (id: number) => {
     if (!confirm("¿Seguro que deseas cancelar esta reserva?")) return;
@@ -375,24 +387,29 @@ function App() {
     }
   };
 
+  // ============================================================
+  // ACCIONES ADMIN/EMPLEADO
+  // ============================================================
   const handleCancelarAdmin = async (e: any) => {
     e.preventDefault();
     if (!reservaCancelandoAdmin) return;
     try {
       const r = await axios.put(`http://127.0.0.1:5000/api/admin/reservas/${reservaCancelandoAdmin.id_reserva}/cancelar-admin`, { motivo: motivoCancelacion });
       alert(`✅ ${r.data.mensaje}`);
-      setReservaCancelandoAdmin(null); setMotivoCancelacion("");
+      setReservaCancelandoAdmin(null);
+      setMotivoCancelacion("");
       cargarReservasAdmin();
     } catch (err: any) {
       alert(`❌ ${err.response?.data?.error || "Error al cancelar."}`);
     }
   };
 
-  // ---------- MODIFICAR RESERVA (ADMIN/EMPLEADO) ----------
   const abrirModalModificarAdmin = (r: ReservaAdmin) => {
     setReservaModificandoAdmin(r);
-    setModAdminFecha(r.fecha); setModAdminHora(r.hora_inicio);
-    setModAdminDuracion("1"); setModAdminIdCancha(String(r.id_cancha));
+    setModAdminFecha(r.fecha);
+    setModAdminHora(r.hora_inicio);
+    setModAdminDuracion("1");
+    setModAdminIdCancha(String(r.id_cancha));
   };
 
   const handleModificarAdmin = async (e: any) => {
@@ -400,8 +417,10 @@ function App() {
     if (!reservaModificandoAdmin) return;
     try {
       const r = await axios.put(`http://127.0.0.1:5000/api/admin/reservas/${reservaModificandoAdmin.id_reserva}/modificar-admin`, {
-        id_cancha: parseInt(modAdminIdCancha), fecha_reserva: modAdminFecha,
-        hora_inicio: modAdminHora, duracion: parseFloat(modAdminDuracion),
+        id_cancha: parseInt(modAdminIdCancha),
+        fecha_reserva: modAdminFecha,
+        hora_inicio: modAdminHora,
+        duracion: parseFloat(modAdminDuracion),
       });
       alert(`✅ ${r.data.mensaje}\nCancha: #${r.data.id_cancha} ${r.data.nueva_cancha}\nNuevo monto: Bs ${r.data.nuevo_monto}`);
       setReservaModificandoAdmin(null);
@@ -411,10 +430,17 @@ function App() {
     }
   };
 
+  // ---------- RESERVA PRESENCIAL ----------
   const abrirModalReservaPresencial = () => {
-    setModalReservaPresencial(true); setPresIdCliente(""); setPresIdCancha("");
-    setPresFecha(""); setPresHora(""); setPresDuracion("1"); setPresMetodoPago("efectivo");
-    setBusquedaCliente(""); setPresMensaje(null);
+    setModalReservaPresencial(true);
+    setPresIdCliente("");
+    setPresIdCancha("");
+    setPresFecha("");
+    setPresHora("");
+    setPresDuracion("1");
+    setPresMetodoPago("efectivo");
+    setBusquedaCliente("");
+    setPresMensaje(null);
   };
 
   const handleReservaPresencial = async (e: any) => {
@@ -422,9 +448,13 @@ function App() {
     setPresMensaje({ texto: "Procesando...", tipo: "info" });
     try {
       const r = await axios.post("http://127.0.0.1:5000/api/empleado/reservas", {
-        id_cancha: parseInt(presIdCancha), id_cliente: parseInt(presIdCliente),
-        fecha_reserva: presFecha, hora_inicio: presHora, duracion: parseFloat(presDuracion),
-        metodo_pago: presMetodoPago, id_empleado: usuario?.id_empleado || null,
+        id_cancha: parseInt(presIdCancha),
+        id_cliente: parseInt(presIdCliente),
+        fecha_reserva: presFecha,
+        hora_inicio: presHora,
+        duracion: parseFloat(presDuracion),
+        metodo_pago: presMetodoPago,
+        id_empleado: usuario?.id_empleado || null,
       });
       setPresMensaje({
         texto: `✅ ${r.data.mensaje} Monto: Bs ${r.data.monto_total}. Estado: ${r.data.estado}.`,
@@ -432,7 +462,10 @@ function App() {
       });
       cargarReservasAdmin();
     } catch (err: any) {
-      setPresMensaje({ texto: `❌ ${err.response?.data?.error || "Error al crear la reserva."}`, tipo: "error" });
+      setPresMensaje({
+        texto: `❌ ${err.response?.data?.error || "Error al crear la reserva."}`,
+        tipo: "error",
+      });
     }
   };
 
@@ -442,10 +475,17 @@ function App() {
     return c.nombre_completo.toLowerCase().includes(q) || c.ci.toLowerCase().includes(q);
   });
 
+  // ---------- REGISTRAR CLIENTE ----------
   const abrirModalRegistrarCliente = () => {
-    setModalRegistrarCliente(true); setRegNombre(""); setRegApellido("");
-    setRegCi(""); setRegCelular(""); setRegEmail(""); setRegUsername("");
-    setRegContrasena(""); setRegMensaje(null);
+    setModalRegistrarCliente(true);
+    setRegNombre("");
+    setRegApellido("");
+    setRegCi("");
+    setRegCelular("");
+    setRegEmail("");
+    setRegUsername("");
+    setRegContrasena("");
+    setRegMensaje(null);
   };
 
   const handleRegistrarCliente = async (e: any) => {
@@ -453,22 +493,38 @@ function App() {
     setRegMensaje({ texto: "Procesando...", tipo: "info" });
     try {
       const r = await axios.post("http://127.0.0.1:5000/api/admin/clientes", {
-        nombre: regNombre, apellido: regApellido, ci: regCi,
-        celular: regCelular, email: regEmail,
-        username: regUsername, contrasena: regContrasena,
+        nombre: regNombre,
+        apellido: regApellido,
+        ci: regCi,
+        celular: regCelular,
+        email: regEmail,
+        username: regUsername,
+        contrasena: regContrasena,
       });
       setRegMensaje({ texto: `✅ ${r.data.mensaje}`, tipo: "success" });
       cargarClientes();
-      setTimeout(() => { setModalRegistrarCliente(false); setRegMensaje(null); }, 1800);
+      setTimeout(() => {
+        setModalRegistrarCliente(false);
+        setRegMensaje(null);
+      }, 1800);
     } catch (err: any) {
-      setRegMensaje({ texto: `❌ ${err.response?.data?.error || "Error al registrar cliente."}`, tipo: "error" });
+      setRegMensaje({
+        texto: `❌ ${err.response?.data?.error || "Error al registrar cliente."}`,
+        tipo: "error",
+      });
     }
   };
 
+  // ---------- BLOQUEOS ----------
   const abrirModalBloqueo = () => {
-    setModalBloqueo(true); setBloIdCancha(""); setBloFechaInicio("");
-    setBloFechaFin(""); setBloHoraInicio(""); setBloHoraFin("");
-    setBloMotivo(""); setBloMensaje(null);
+    setModalBloqueo(true);
+    setBloIdCancha("");
+    setBloFechaInicio("");
+    setBloFechaFin("");
+    setBloHoraInicio("");
+    setBloHoraFin("");
+    setBloMotivo("");
+    setBloMensaje(null);
   };
 
   const handleCrearBloqueo = async (e: any) => {
@@ -480,15 +536,25 @@ function App() {
     setBloMensaje({ texto: "Procesando...", tipo: "info" });
     try {
       const r = await axios.post("http://127.0.0.1:5000/api/admin/bloqueos", {
-        id_cancha: parseInt(bloIdCancha), id_administrador: usuario.id_administrador,
-        fecha_inicio: bloFechaInicio, fecha_fin: bloFechaFin,
-        hora_inicio: bloHoraInicio, hora_fin: bloHoraFin, motivo: bloMotivo,
+        id_cancha: parseInt(bloIdCancha),
+        id_administrador: usuario.id_administrador,
+        fecha_inicio: bloFechaInicio,
+        fecha_fin: bloFechaFin,
+        hora_inicio: bloHoraInicio,
+        hora_fin: bloHoraFin,
+        motivo: bloMotivo,
       });
       setBloMensaje({ texto: `✅ ${r.data.mensaje}`, tipo: "success" });
       cargarBloqueos();
-      setTimeout(() => { setModalBloqueo(false); setBloMensaje(null); }, 1500);
+      setTimeout(() => {
+        setModalBloqueo(false);
+        setBloMensaje(null);
+      }, 1500);
     } catch (err: any) {
-      setBloMensaje({ texto: `❌ ${err.response?.data?.error || "Error al crear bloqueo."}`, tipo: "error" });
+      setBloMensaje({
+        texto: `❌ ${err.response?.data?.error || "Error al crear bloqueo."}`,
+        tipo: "error",
+      });
     }
   };
 
@@ -503,33 +569,49 @@ function App() {
     }
   };
 
+  // ---------- GESTIÓN CANCHAS ----------
   const abrirModalCancha = (cancha?: Cancha) => {
     if (cancha) {
-      setCanchaEditando(cancha); setCanFormNombre(cancha.nombre);
-      setCanFormDeporte(cancha.deporte); setCanFormPrecio(String(cancha.precio_hora));
-      setCanFormTechada(cancha.techada); setCanFormUbicacion(cancha.ubicacion || "");
+      setCanchaEditando(cancha);
+      setCanFormNombre(cancha.nombre);
+      setCanFormDeporte(cancha.deporte);
+      setCanFormPrecio(String(cancha.precio_hora));
+      setCanFormTechada(cancha.techada);
+      setCanFormUbicacion(cancha.ubicacion || "");
       setCanFormSuperficie(cancha.superficie || "");
-      setCanFormCategoria(String(cancha.id_categoria || "")); setCanFormEstado(cancha.estado);
+      setCanFormCategoria(String(cancha.id_categoria || ""));
+      setCanFormEstado(cancha.estado);
     } else {
-      setCanchaEditando(null); setCanFormNombre(""); setCanFormDeporte("Fútbol");
-      setCanFormPrecio(""); setCanFormTechada(false); setCanFormUbicacion("");
-      setCanFormSuperficie(""); setCanFormCategoria(categorias[0]?.id_categoria.toString() || "");
+      setCanchaEditando(null);
+      setCanFormNombre("");
+      setCanFormDeporte("Fútbol");
+      setCanFormPrecio("");
+      setCanFormTechada(false);
+      setCanFormUbicacion("");
+      setCanFormSuperficie("");
+      setCanFormCategoria(categorias[0]?.id_categoria.toString() || "");
       setCanFormEstado("disponible");
     }
-    setCanMensaje(null); setModalCancha(true);
+    setCanMensaje(null);
+    setModalCancha(true);
   };
 
   const handleGuardarCancha = async (e: any) => {
     e.preventDefault();
     if (!usuario?.id_administrador) {
-      setCanMensaje({ texto: "❌ Solo admin.", tipo: "error" }); return;
+      setCanMensaje({ texto: "❌ Solo admin.", tipo: "error" });
+      return;
     }
     setCanMensaje({ texto: "Guardando...", tipo: "info" });
     const datos = {
-      nombre_cancha: canFormNombre, tipo_deporte: canFormDeporte,
-      precio_hora: parseFloat(canFormPrecio), techada: canFormTechada,
-      ubicacion: canFormUbicacion, superficie: canFormSuperficie,
-      id_categoria: parseInt(canFormCategoria), id_administrador: usuario.id_administrador,
+      nombre_cancha: canFormNombre,
+      tipo_deporte: canFormDeporte,
+      precio_hora: parseFloat(canFormPrecio),
+      techada: canFormTechada,
+      ubicacion: canFormUbicacion,
+      superficie: canFormSuperficie,
+      id_categoria: parseInt(canFormCategoria),
+      id_administrador: usuario.id_administrador,
       estado: canFormEstado,
     };
     try {
@@ -541,9 +623,15 @@ function App() {
         setCanMensaje({ texto: "✅ Cancha creada", tipo: "success" });
       }
       cargarCanchas();
-      setTimeout(() => { setModalCancha(false); setCanMensaje(null); }, 1200);
+      setTimeout(() => {
+        setModalCancha(false);
+        setCanMensaje(null);
+      }, 1200);
     } catch (err: any) {
-      setCanMensaje({ texto: `❌ ${err.response?.data?.error || "Error al guardar."}`, tipo: "error" });
+      setCanMensaje({
+        texto: `❌ ${err.response?.data?.error || "Error al guardar."}`,
+        tipo: "error",
+      });
     }
   };
 
@@ -558,14 +646,19 @@ function App() {
     }
   };
 
+  // ---------- GESTIÓN CATEGORÍAS ----------
   const abrirModalCategoria = (cat?: Categoria) => {
     if (cat) {
-      setCatEditando(cat); setCatFormNombre(cat.nombre);
+      setCatEditando(cat);
+      setCatFormNombre(cat.nombre);
       setCatFormDescripcion(cat.descripcion || "");
     } else {
-      setCatEditando(null); setCatFormNombre(""); setCatFormDescripcion("");
+      setCatEditando(null);
+      setCatFormNombre("");
+      setCatFormDescripcion("");
     }
-    setCatMensaje(null); setModalCategoria(true);
+    setCatMensaje(null);
+    setModalCategoria(true);
   };
 
   const handleGuardarCategoria = async (e: any) => {
@@ -574,19 +667,27 @@ function App() {
     try {
       if (catEditando) {
         await axios.put(`http://127.0.0.1:5000/api/admin/categorias/${catEditando.id_categoria}`, {
-          nombre: catFormNombre, descripcion: catFormDescripcion,
+          nombre: catFormNombre,
+          descripcion: catFormDescripcion,
         });
         setCatMensaje({ texto: "✅ Categoría actualizada", tipo: "success" });
       } else {
         await axios.post("http://127.0.0.1:5000/api/admin/categorias", {
-          nombre: catFormNombre, descripcion: catFormDescripcion,
+          nombre: catFormNombre,
+          descripcion: catFormDescripcion,
         });
         setCatMensaje({ texto: "✅ Categoría creada", tipo: "success" });
       }
       cargarCategorias();
-      setTimeout(() => { setModalCategoria(false); setCatMensaje(null); }, 1200);
+      setTimeout(() => {
+        setModalCategoria(false);
+        setCatMensaje(null);
+      }, 1200);
     } catch (err: any) {
-      setCatMensaje({ texto: `❌ ${err.response?.data?.error || "Error."}`, tipo: "error" });
+      setCatMensaje({
+        texto: `❌ ${err.response?.data?.error || "Error."}`,
+        tipo: "error",
+      });
     }
   };
 
@@ -602,47 +703,11 @@ function App() {
   };
 
   // ============================================================
-  // PANTALLA DE LOGIN
+  // RENDER
   // ============================================================
-  if (!usuario) {
-    return (
-      <div className="login-container">
-        <div className="login-card">
-          <div className="login-header">
-            <h1>🏟️ Sistema de Gestión de Reservas</h1>
-            <p>Inicia sesión para continuar</p>
-          </div>
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label>Usuario</label>
-              <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="Ej: juan" required />
-            </div>
-            <div className="form-group">
-              <label>Contraseña</label>
-              <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="••••••" required />
-            </div>
-            <button type="submit" className="btn-primary" style={{ width: "100%" }} disabled={loginCargando}>
-              {loginCargando ? "Ingresando..." : "Iniciar Sesión"}
-            </button>
-          </form>
-          {loginError && <div className="mensaje error" style={{ marginTop: "15px" }}>{loginError}</div>}
-          <div className="login-hint">
-            <p><strong>Credenciales de prueba:</strong></p>
-            <p>👤 Cliente: <code>juan</code> / <code>123</code></p>
-            <p>🛡️ Admin: <code>admin</code> / <code>admin123</code></p>
-            <p>💼 Empleado: <code>pedro</code> / <code>123</code></p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (cargando) return <div className="cargando">Cargando canchas...</div>;
   if (error) return <div className="app-container"><p className="mensaje error">{error}</p></div>;
 
-  // ============================================================
-  // PANTALLA PRINCIPAL
-  // ============================================================
   return (
     <div className="app-container">
       <header className="app-header">
@@ -650,33 +715,75 @@ function App() {
           <h1>🏟️ Sistema de Gestión de Reservas</h1>
           <div className="user-info">
             <div className="user-details">
-              <span className="user-name">👤 {usuario.nombre_completo}</span>
-              <span className={`rol-badge rol-${usuario.rol}`}>{usuario.rol}</span>
+              <span className="user-name">👤 {usuario?.nombre_completo}</span>
+              <span className={`rol-badge rol-${usuario?.rol}`}>{usuario?.rol}</span>
             </div>
             <button className="btn-secondary btn-sm" onClick={handleLogout}>Cerrar sesión</button>
           </div>
         </div>
       </header>
 
-      {/* VISTA: CLIENTE */}
-      {usuario.rol === "cliente" && (
+      {/* ===================== VISTA: CLIENTE ===================== */}
+      {esCliente && (
         <>
           <h2 className="section-title">Canchas Disponibles</h2>
           <div className="canchas-grid">
-            {canchas.map((c) => (
-              <div key={c.id} className="cancha-card">
-                <div className="cancha-card-header">
-                  <span className="cancha-id">#{c.id}</span>
-                  <h3>{c.nombre}</h3>
+            {canchas.map((c) => {
+              // Buscar si esta cancha tiene un bloqueo activo (mantenimiento, evento, etc.)
+              const bloqueoActivo = bloqueos.find(
+                (b) => b.id_cancha === c.id && b.estado === 'activo'
+              );
+              
+              // Determinar si está bloqueada (por estado o por bloqueo activo)
+              const fueraServicio = c.estado === 'fuera_servicio';
+              const enMantenimiento = !!bloqueoActivo;
+
+              return (
+                <div 
+                  key={c.id} 
+                  className="cancha-card"
+                  style={{ 
+                    opacity: (fueraServicio || enMantenimiento) ? 0.7 : 1,
+                    borderColor: enMantenimiento ? '#ff9800' : fueraServicio ? '#e63946' : undefined
+                  }}
+                >
+                  <div className="cancha-card-header">
+                    <span className="cancha-id">#{c.id}</span>
+                    <h3>{c.nombre}</h3>
+                  </div>
+                  <p className="deporte">⚽ {c.deporte} {c.techada && "• Techada"}</p>
+                  {c.categoria && <p className="deporte">🏷️ {c.categoria}</p>}
+                  {c.ubicacion && <p className="deporte">📍 {c.ubicacion}</p>}
+                  {c.superficie && <p className="deporte">🏟️ {c.superficie}</p>}
+                  <div className="precio">Bs {c.precio_hora} <span>/ hora</span></div>
+                  
+                  {/* Estado con información del bloqueo */}
+                  {enMantenimiento ? (
+                    <div style={{
+                      marginTop: '10px',
+                      padding: '10px',
+                      background: 'rgba(255, 152, 0, 0.15)',
+                      border: '1px solid rgba(255, 152, 0, 0.4)',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      color: '#ff9800'
+                    }}>
+                      <strong>🔒 {bloqueoActivo.motivo}</strong>
+                      <br />
+                      📅 Del <strong>{bloqueoActivo.fecha_inicio}</strong> al <strong>{bloqueoActivo.fecha_fin}</strong>
+                      <br />
+                      🕐 Horario: {bloqueoActivo.hora_inicio} - {bloqueoActivo.hora_fin}
+                      <br />
+                      <em style={{ fontSize: '0.8rem' }}>Disponible para reservar después del {bloqueoActivo.fecha_fin}</em>
+                    </div>
+                  ) : fueraServicio ? (
+                    <span className="badge fuera_servicio">FUERA DE SERVICIO</span>
+                  ) : (
+                    <span className="badge disponible">DISPONIBLE</span>
+                  )}
                 </div>
-                <p className="deporte">⚽ {c.deporte} {c.techada && "• Techada"}</p>
-                {c.categoria && <p className="deporte">🏷️ {c.categoria}</p>}
-                {c.ubicacion && <p className="deporte">📍 {c.ubicacion}</p>}
-                {c.superficie && <p className="deporte">🏟️ {c.superficie}</p>}
-                <div className="precio">Bs {c.precio_hora} <span>/ hora</span></div>
-                <span className={`badge ${c.estado}`}>{c.estado}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <hr className="divider" />
@@ -688,9 +795,19 @@ function App() {
                 <label>Cancha</label>
                 <select value={idCancha} onChange={(e) => setIdCancha(e.target.value)} required>
                   <option value="">Seleccione una cancha</option>
-                  {canchas.map((c) => (
-                    <option key={c.id} value={c.id}>#{c.id} - {c.nombre} - Bs {c.precio_hora}/h</option>
-                  ))}
+                  {canchas
+                    .filter(c => c.estado !== 'fuera_servicio') // Excluir solo las fuera_servicio
+                    .map((c) => {
+                      const bloqueoActivo = bloqueos.find(
+                        (b) => b.id_cancha === c.id && b.estado === 'activo'
+                      );
+                      return (
+                        <option key={c.id} value={c.id}>
+                          #{c.id} - {c.nombre} - Bs {c.precio_hora}/h
+                          {bloqueoActivo ? ` (🔒 ${bloqueoActivo.motivo} hasta ${bloqueoActivo.fecha_fin})` : ''}
+                        </option>
+                      );
+                    })}
                 </select>
               </div>
               <div className="form-group">
@@ -713,57 +830,18 @@ function App() {
               </div>
               <button type="submit" className="btn-primary" style={{ width: "100%" }}>Reservar</button>
             </form>
-            {mensajeReserva && <div className={`mensaje ${mensajeReserva.tipo}`}>{mensajeReserva.texto}</div>}
+            {/* ✅ AGREGAR ESTO */}
+            {mensajeReserva && (
+              <div className={`mensaje ${mensajeReserva.tipo}`}>
+                {mensajeReserva.texto}
+              </div>
+            )}
           </div>
-
-          <hr className="divider" />
-
-          <h2 className="section-title">Mis Reservas</h2>
-          <div className="filtros">
-            <button className={`filtro-btn ${filtroReservas === "todas" ? "active" : ""}`} onClick={() => setFiltroReservas("todas")}>Todas</button>
-            <button className={`filtro-btn ${filtroReservas === "vigentes" ? "active" : ""}`} onClick={() => setFiltroReservas("vigentes")}>Vigentes</button>
-          </div>
-
-          {reservas.length === 0 ? (
-            <div className="estado-vacio">No tienes reservas registradas.</div>
-          ) : (
-            <div className="tabla-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Cancha</th><th>Fecha</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Motivo</th><th style={{ textAlign: "center" }}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reservas.map((r) => (
-                    <tr key={r.id_reserva}>
-                      <td><strong>#{r.id_cancha} {r.cancha}</strong></td>
-                      <td>{r.fecha}</td>
-                      <td>{r.hora_inicio}</td>
-                      <td>{r.hora_fin}</td>
-                      <td><span className={`estado ${r.estado}`}>{r.estado}</span></td>
-                      <td style={{ fontSize: "0.85rem", color: "var(--color-text-dim)", maxWidth: "200px" }}>{r.motivo_cancelacion || "—"}</td>
-                      <td>
-                        <div className="acciones">
-                          {r.estado === "pendiente" && (
-                            <button className="btn-success btn-sm" onClick={() => setReservaPagando(r)}>💳 Pagar</button>
-                          )}
-                          {(r.estado === "pendiente" || r.estado === "confirmada") && (
-                            <button className="btn-danger btn-sm" onClick={() => cancelarReserva(r.id_reserva)}>✖ Cancelar</button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </>
       )}
 
-      {/* VISTA: EMPLEADO */}
-      {usuario.rol === "empleado" && (
+      {/* ===================== VISTA: EMPLEADO ===================== */}
+      {esEmpleado && (
         <>
           <h2 className="section-title">📋 Gestión de Reservas</h2>
           <div style={{ marginBottom: "15px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
@@ -820,8 +898,8 @@ function App() {
         </>
       )}
 
-      {/* VISTA: ADMINISTRADOR */}
-      {usuario.rol === "administrador" && (
+      {/* ===================== VISTA: ADMINISTRADOR ===================== */}
+      {esAdmin && (
         <>
           <h2 className="section-title">📋 Gestión de Reservas</h2>
           <div style={{ marginBottom: "15px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
@@ -961,41 +1039,100 @@ function App() {
 
           {/* BLOQUEOS */}
           <div ref={bloqueosRef}>
-            <hr className="divider" />
-            <h2 className="section-title">🔒 Canchas Bloqueadas</h2>
-            {bloqueos.length === 0 ? (
-              <div className="estado-vacio">No hay bloqueos activos.</div>
-            ) : (
-              <div className="tabla-wrapper">
-                <table>
-                  <thead>
-                    <tr><th>Cancha</th><th>Desde</th><th>Hasta</th><th>Horario</th><th>Motivo</th><th style={{ textAlign: "center" }}>Acciones</th></tr>
-                  </thead>
-                  <tbody>
-                    {bloqueos.map((b) => (
-                      <tr key={b.id_bloqueo}>
-                        <td><strong>#{b.id_cancha} {b.cancha}</strong></td>
-                        <td>{b.fecha_inicio}</td>
-                        <td>{b.fecha_fin}</td>
-                        <td>{b.hora_inicio} - {b.hora_fin}</td>
-                        <td style={{ fontSize: "0.85rem", maxWidth: "250px" }}>{b.motivo}</td>
-                        <td>
-                          <div className="acciones">
-                            <button className="btn-danger btn-sm" onClick={() => handleEliminarBloqueo(b.id_bloqueo)}>🗑️</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+  <hr className="divider" />
+  <h2 className="section-title">🔒 Canchas Bloqueadas / No Disponibles</h2>
+
+  {/* Bloqueos programados (tabla bloqueo) */}
+  <h3 style={{ marginBottom: "10px", color: "var(--color-text-dim)", fontSize: "1rem" }}>
+    📅 Bloqueos programados
+  </h3>
+  {bloqueos.length === 0 ? (
+    <div className="estado-vacio">No hay bloqueos programados.</div>
+  ) : (
+    <div className="tabla-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Cancha</th>
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Horario</th>
+            <th>Motivo</th>
+            <th style={{ textAlign: "center" }}>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bloqueos.map((b) => (
+            <tr key={b.id_bloqueo}>
+              <td><strong>#{b.id_cancha} {b.cancha}</strong></td>
+              <td>{b.fecha_inicio}</td>
+              <td>{b.fecha_fin}</td>
+              <td>{b.hora_inicio} - {b.hora_fin}</td>
+              <td style={{ fontSize: "0.85rem", maxWidth: "250px" }}>{b.motivo}</td>
+              <td>
+                <div className="acciones">
+                  <button className="btn-danger btn-sm" onClick={() => handleEliminarBloqueo(b.id_bloqueo)}>🗑️</button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  {/* Canchas en mantenimiento o fuera de servicio */}
+  <h3 style={{ marginTop: "25px", marginBottom: "10px", color: "var(--color-text-dim)", fontSize: "1rem" }}>
+    🚧 Canchas en mantenimiento o fuera de servicio
+  </h3>
+  {canchas.filter(c => c.estado !== 'disponible').length === 0 ? (
+    <div className="estado-vacio">Todas las canchas están disponibles.</div>
+  ) : (
+    <div className="tabla-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cancha</th>
+            <th>Deporte</th>
+            <th>Estado</th>
+            <th style={{ textAlign: "center" }}>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {canchas.filter(c => c.estado !== 'disponible').map((c) => (
+            <tr key={c.id}>
+              <td><strong style={{ color: "var(--color-primary)" }}>#{c.id}</strong></td>
+              <td><strong>{c.nombre}</strong></td>
+              <td>{c.deporte}</td>
+              <td>
+                <span className={`badge ${c.estado}`}>{c.estado}</span>
+              </td>
+              <td>
+                <div className="acciones">
+                  <button
+                    className="btn-warning btn-sm"
+                    onClick={() => abrirModalCancha(c)}
+                    title="Editar cancha para cambiar su estado"
+                  >
+                    ✏️ Cambiar estado
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
         </>
       )}
 
+      {/* ===================== MODALES ===================== */}
+
       {/* MODAL: PAGAR */}
-      {usuario.rol === "cliente" && reservaPagando && (
+      {esCliente && reservaPagando && (
         <div className="modal-overlay" onClick={() => setReservaPagando(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>💳 Pagar Reserva #{reservaPagando.id_reserva}</h3>
@@ -1024,7 +1161,7 @@ function App() {
       )}
 
       {/* MODAL: CANCELAR ADMIN */}
-      {(usuario.rol === "empleado" || usuario.rol === "administrador") && reservaCancelandoAdmin && (
+      {esStaff && reservaCancelandoAdmin && (
         <div className="modal-overlay" onClick={() => setReservaCancelandoAdmin(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>⚠️ Cancelar Reserva #{reservaCancelandoAdmin.id_reserva}</h3>
@@ -1051,7 +1188,7 @@ function App() {
       )}
 
       {/* MODAL: MODIFICAR RESERVA (Admin/Empleado) */}
-      {(usuario.rol === "empleado" || usuario.rol === "administrador") && reservaModificandoAdmin && (
+      {esStaff && reservaModificandoAdmin && (
         <div className="modal-overlay" onClick={() => setReservaModificandoAdmin(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "550px" }}>
             <h3>✏️ Modificar Reserva #{reservaModificandoAdmin.id_reserva}</h3>
@@ -1095,7 +1232,7 @@ function App() {
       )}
 
       {/* MODAL: RESERVA PRESENCIAL */}
-      {(usuario.rol === "empleado" || usuario.rol === "administrador") && modalReservaPresencial && (
+      {esStaff && modalReservaPresencial && (
         <div className="modal-overlay" onClick={() => setModalReservaPresencial(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "600px" }}>
             <h3>➕ Registrar Reserva Presencial</h3>
@@ -1165,7 +1302,7 @@ function App() {
       )}
 
       {/* MODAL: REGISTRAR CLIENTE NUEVO */}
-      {(usuario.rol === "empleado" || usuario.rol === "administrador") && modalRegistrarCliente && (
+      {esStaff && modalRegistrarCliente && (
         <div className="modal-overlay" onClick={() => setModalRegistrarCliente(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "550px" }}>
             <h3>👤 Registrar Cliente Nuevo</h3>
@@ -1192,7 +1329,7 @@ function App() {
       )}
 
       {/* MODAL: CREAR BLOQUEO */}
-      {usuario.rol === "administrador" && modalBloqueo && (
+      {esAdmin && modalBloqueo && (
         <div className="modal-overlay" onClick={() => setModalBloqueo(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>🔒 Bloquear Cancha</h3>
@@ -1228,7 +1365,7 @@ function App() {
       )}
 
       {/* MODAL: CREAR/EDITAR CANCHA */}
-      {usuario.rol === "administrador" && modalCancha && (
+      {esAdmin && modalCancha && (
         <div className="modal-overlay" onClick={() => setModalCancha(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "550px" }}>
             <h3>{canchaEditando ? `✏️ Editar Cancha #${canchaEditando.id}` : "➕ Nueva Cancha"}</h3>
@@ -1282,7 +1419,7 @@ function App() {
       )}
 
       {/* MODAL: CREAR/EDITAR CATEGORÍA */}
-      {usuario.rol === "administrador" && modalCategoria && (
+      {esAdmin && modalCategoria && (
         <div className="modal-overlay" onClick={() => setModalCategoria(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>{catEditando ? "✏️ Editar Categoría" : "➕ Nueva Categoría"}</h3>
@@ -1313,4 +1450,4 @@ function App() {
   );
 }
 
-export default App;
+export default ReservasPage;

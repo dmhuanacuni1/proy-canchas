@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from extensions import db
 from .email_service import send_recovery_email, smtp_is_configured
-from .models import Cliente, Persona, Usuario
+from .models import Cliente, Persona, Usuario, Administrador
 from .security import (
     create_reset_token,
     create_token,
@@ -59,14 +59,41 @@ def _unique_ci(preferred=None):
 
 def _serialize_user(user):
     persona = user.persona
+    nombre_completo = (
+        f"{persona.nombre} {persona.apellido}" if persona else user.username
+    )
+    
+    # Obtener IDs de las tablas especializadas
+    id_cliente = None
+    id_administrador = None
+    id_empleado = None
+    
+    if user.rol == "cliente":
+        cliente = Cliente.query.filter_by(id_usuario=user.id_usuario).first()
+        if cliente:
+            id_cliente = cliente.id_cliente
+    elif user.rol in ("administrador", "admin"):
+        admin = Administrador.query.filter_by(id_usuario=user.id_usuario).first()
+        if admin:
+            id_administrador = admin.id_administrador
+    elif user.rol == "empleado":
+        emp = Empleado.query.filter_by(id_usuario=user.id_usuario).first()
+        if emp:
+            id_empleado = emp.id_empleado
+    
     return {
         "id": user.id_usuario,
+        "id_usuario": user.id_usuario,
         "username": user.username,
         "rol": user.rol,
         "role": frontend_role(user.rol),
         "email": persona.email if persona else None,
         "nombre": persona.nombre if persona else None,
         "apellido": persona.apellido if persona else None,
+        "nombre_completo": nombre_completo,
+        "id_cliente": id_cliente,
+        "id_administrador": id_administrador,
+        "id_empleado": id_empleado,
     }
 
 

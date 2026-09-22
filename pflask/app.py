@@ -6,15 +6,19 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from flask_jwt_extended import create_access_token, JWTManager
 
 from extensions import db
 from auth.models import Persona, Usuario, Cliente, Administrador, Empleado
 
 load_dotenv()
 
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "clave-secreta-123")
+jwt = JWTManager(app)
 
 CORS(app, resources={r"/api/*": {"origins": "*"}}, allow_headers=["*"])
 db.init_app(app)
@@ -154,8 +158,9 @@ def index():
 @app.route("/api/login", methods=["POST"])
 def login():
     datos = request.get_json()
-    username = datos.get("username")
-    contrasena = datos.get("contrasena")
+    # Acepta "email", "username" o "contrasena"/"password"
+    username = datos.get("email") or datos.get("username")
+    contrasena = datos.get("password") or datos.get("contrasena")
 
     if not username or not contrasena:
         return jsonify({"error": "Usuario y contraseña son obligatorios."}), 400
@@ -174,17 +179,26 @@ def login():
     if usuario.rol == "cliente":
         cliente = Cliente.query.filter_by(id_usuario=usuario.id_usuario).first()
         if cliente: id_cliente = cliente.id_cliente
-    elif usuario.rol == "administrador":
+    elif usuario.rol in ("administrador", "admin"):
         admin = Administrador.query.filter_by(id_usuario=usuario.id_usuario).first()
         if admin: id_administrador = admin.id_administrador
     elif usuario.rol == "empleado":
         emp = Empleado.query.filter_by(id_usuario=usuario.id_usuario).first()
         if emp: id_empleado = emp.id_empleado
 
+    # Normalizamos "administrador" a "admin" para el frontend
+    rol_frontend = "admin" if usuario.rol == "administrador" else usuario.rol
+
+    token = create_access_token(identity=usuario.id_usuario)
+
     return jsonify({
+        # Lo que espera AuthContext y LoginPage:
+        "token": token,
+        "role": rol_frontend,           # <-- Inglés (para LoginPage)
+        "rol": usuario.rol,             # <-- Español (para ReservasPage)
+        # Datos extra que necesita ReservasPage:
         "id_usuario": usuario.id_usuario,
         "username": usuario.username,
-        "rol": usuario.rol,
         "id_cliente": id_cliente,
         "id_administrador": id_administrador,
         "id_empleado": id_empleado,
@@ -252,7 +266,12 @@ def crear_reserva():
         if choque: return jsonify({"error": "La cancha no está disponible en ese horario."}), 400
 
         cancha = Cancha.query.get(id_cancha)
-        if not cancha: return jsonify({"error": "Cancha no encontrada."}), 404
+        if not cancha:
+            return jsonify({"error": "Cancha no encontrada."}), 404
+        if cancha.estado != "disponible":
+            return jsonify({"error": f"La cancha no está disponible (estado: {cancha.estado})."}), 400
+        if cancha.estado == "fuera_servicio":
+            return jsonify({"error": "La cancha está fuera de servicio temporalmente."}), 400
 
         monto_total = float(cancha.precio_hora) * duracion_horas
 
