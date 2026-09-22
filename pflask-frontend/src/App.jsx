@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import UsuarioEventosPage from './pages/UsuarioEventosPage';
+import AdminEventosPage from './pages/AdminEventosPage';
 
 function App() {
   return (
@@ -22,6 +24,16 @@ function App() {
 
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
+      {/* Rutas del Módulo de Eventos y Servicios Sociales */}
+      <Route path="/eventos" element={<UsuarioEventosPage />} />
+      <Route 
+        path="/admin/eventos" 
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminEventosPage />
+          </ProtectedRoute>
+        } 
+      />
       
       {/* Ruta protegida: Solo accesible si hay sesión iniciada */}
       <Route 

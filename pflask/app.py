@@ -188,6 +188,7 @@ def obtener_administrador(id_administrador):
 
 class Administrador(db.Model):
     __tablename__ = "administrador"
+    __table_args__ = {"extend_existing": True}
 
     id_administrador = db.Column(db.Integer, primary_key=True)
     nivel_acceso = db.Column(db.String(30), nullable=False)
@@ -994,6 +995,11 @@ def cambiar_estado_cancha(id_cancha):
 # Ver auth/LEEME.txt
 from auth import register_auth
 register_auth(app)
+
+# Módulo de Eventos y Servicios Sociales
+from controllers.eventos_controller import eventos_bp
+app.register_blueprint(eventos_bp)
+
 
 
 if __name__ == "__main__":

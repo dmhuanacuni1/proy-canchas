@@ -45,6 +45,7 @@ class Cliente(db.Model):
 
 class Administrador(db.Model):
     __tablename__ = "administrador"
+    __table_args__ = {"extend_existing": True}
 
     id_administrador = db.Column(db.Integer, primary_key=True)
     nivel_acceso = db.Column(db.String(30), nullable=False)

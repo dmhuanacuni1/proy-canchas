@@ -120,12 +120,29 @@ const DashboardPage = () => {
       <h1>Bienvenido al Sistema</h1>
       <p>Has iniciado sesión correctamente. Tu rol es: <strong>{user?.role}</strong></p>
       
-      <button 
-        onClick={handleLogout} 
-        style={{ padding: '10px 20px', backgroundColor: 'red', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}
-      >
-        Cerrar Sesión
-      </button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <button 
+          onClick={() => navigate('/eventos')}
+          style={{ padding: '10px 20px', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          Ver Catálogo de Eventos
+        </button>
+        {user?.role === 'admin' && (
+          <button 
+            onClick={() => navigate('/admin/eventos')}
+            style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Gestión de Eventos (Admin)
+          </button>
+        )}
+        <button 
+          onClick={handleLogout} 
+          style={{ padding: '10px 20px', backgroundColor: 'red', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          Cerrar Sesión
+        </button>
+      </div>
+
 
       {user?.role === 'admin' && (
         <div style={{ marginTop: '30px', borderTop: '2px solid #ccc', paddingTop: '20px' }}>
