@@ -119,7 +119,50 @@ const DashboardPage = () => {
     <div style={{ padding: '40px', fontFamily: 'sans-serif' }}>
       <h1>Bienvenido al Sistema</h1>
       <p>Has iniciado sesión correctamente. Tu rol es: <strong>{user?.role}</strong></p>
-      
+
+      {/* BOTONES DE NAVEGACIÓN SEGÚN ROL */}
+    <div style={{ marginTop: '20px', marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+      {user?.role === 'user' && (
+        <button
+          onClick={() => navigate('/reservas')}
+          style={{ padding: '12px 24px', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px' }}
+        >
+          🎾 Ver Canchas y Reservar
+        </button>
+      )}
+
+      {user?.role === 'empleado' && (
+        <button
+          onClick={() => navigate('/reservas')}
+          style={{ padding: '12px 24px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px' }}
+        >
+          📋 Gestionar Reservas
+        </button>
+      )}
+
+      {user?.role === 'admin' && (
+        <>
+          <button
+            onClick={() => navigate('/reservas')}
+            style={{ padding: '12px 24px', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px' }}
+          >
+            🎾 Ver Reservas
+          </button>
+          <button
+            onClick={() => {
+              const el = document.getElementById('gestion-usuarios');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{ padding: '12px 24px', backgroundColor: '#6f42c1', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px' }}
+          >
+            👥 Gestionar Usuarios
+          </button>
+        </>
+      )}
+    </div>
+
+
+
       <button 
         onClick={handleLogout} 
         style={{ padding: '10px 20px', backgroundColor: 'red', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}
@@ -128,7 +171,7 @@ const DashboardPage = () => {
       </button>
 
       {user?.role === 'admin' && (
-        <div style={{ marginTop: '30px', borderTop: '2px solid #ccc', paddingTop: '20px' }}>
+        <div id="gestion-usuarios" style={{ marginTop: '30px', borderTop: '2px solid #ccc', paddingTop: '20px' }}>
           <h2>Gestión de Usuarios</h2>
           
           {errorMsg && <div style={{ color: 'white', backgroundColor: '#dc3545', padding: '10px', marginBottom: '15px' }}>{errorMsg}</div>}

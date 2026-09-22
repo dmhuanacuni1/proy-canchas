@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from extensions import db
 from .email_service import send_recovery_email, smtp_is_configured
-from .models import Cliente, Empleado, Persona, Usuario#añadir 'Empleado'
+from .models import Administrador, Cliente, Empleado, Persona, Usuario
 from .security import (
     create_reset_token,
     create_token,

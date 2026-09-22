@@ -33,11 +33,7 @@ const LoginPage = () => {
       login(userData);
       
       // Redirigimos según el rol (Caso de uso 2)
-      if (userData.role === 'admin') {
-        navigate('/admin-dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     } catch (error) {
       if (!error.response) {
         setErrorMsg('No se pudo conectar con el servidor. ¿Está Flask corriendo en el puerto 5000?');
