@@ -39,9 +39,9 @@ const ForgotPasswordPage = () => {
   return (
     <div style={{ padding: '40px', maxWidth: '400px', margin: '50px auto', fontFamily: 'sans-serif', border: '1px solid #ccc', borderRadius: '8px' }}>
       <h2>Recuperar Contraseña</h2>
-      <p style={{ fontSize: '14px', color: '#555' }}>Ingresa tu correo y te enviaremos las instrucciones para restablecer tu acceso.</p>
+      <p style={{ fontSize: '14px', color: '#6b7280' }}>Ingresa tu correo y te enviaremos las instrucciones para restablecer tu acceso.</p>
 
-      {message && <div style={{ color: 'white', backgroundColor: '#28a745', padding: '10px', marginBottom: '15px' }}>{message}</div>}
+      {message && <div style={{ color: 'white', backgroundColor: '#6366F1', padding: '10px', marginBottom: '15px' }}>{message}</div>}
       {errorMsg && <div style={{ color: 'white', backgroundColor: 'red', padding: '10px', marginBottom: '15px' }}>{errorMsg}</div>}
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -55,13 +55,13 @@ const ForgotPasswordPage = () => {
           <p style={{ color: 'red', margin: '5px 0 0 0', fontSize: '14px' }}>{errors.email?.message}</p>
         </div>
 
-        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px' }}>
+        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '15px' }}>
           Enviar enlace de recuperación
         </button>
       </form>
       
       <div style={{ textAlign: 'center', marginTop: '10px' }}>
-        <Link to="/login" style={{ color: '#007BFF', textDecoration: 'none', fontSize: '14px' }}>
+        <Link to="/login" style={{ color: '#6366F1', textDecoration: 'none', fontSize: '14px' }}>
           ← Volver al Login
         </Link>
       </div>

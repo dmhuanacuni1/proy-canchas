@@ -74,16 +74,16 @@ const LoginPage = () => {
           <p style={{ color: 'red', margin: '5px 0 0 0', fontSize: '14px' }}>{errors.password?.message}</p>
         </div>
 
-        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           Ingresar
         </button>
         <div style={{ textAlign: 'center', marginTop: '15px' }}>
-          <Link to="/forgot-password" style={{ color: '#007BFF', textDecoration: 'none', fontSize: '14px' }}>
+          <Link to="/forgot-password" style={{ color: '#6366F1', textDecoration: 'none', fontSize: '14px' }}>
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
         <div style={{ textAlign: 'center', marginTop: '10px' }}>
-            <Link to="/register" style={{ color: '#28a745', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>
+            <Link to="/register" style={{ color: '#6366F1', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>
             ¿No tienes cuenta? Regístrate aquí
             </Link>
         </div>

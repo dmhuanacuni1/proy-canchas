@@ -52,7 +52,7 @@ export const EventoCard: React.FC<EventoCardProps> = ({ evento, onVerDetalles })
         style={{
           marginTop: "8px",
           padding: "10px 15px",
-          backgroundColor: "#007BFF",
+          backgroundColor: "#6366F1",
           color: "#ffffff",
           border: "none",
           borderRadius: "4px",

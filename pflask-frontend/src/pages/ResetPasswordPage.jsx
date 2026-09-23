@@ -47,7 +47,7 @@ const ResetPasswordPage = () => {
     <div style={{ padding: '40px', maxWidth: '400px', margin: '50px auto', fontFamily: 'sans-serif', border: '1px solid #ccc', borderRadius: '8px' }}>
       <h2>Crear Nueva Contraseña</h2>
       
-      {message && <div style={{ color: 'white', backgroundColor: '#28a745', padding: '10px', marginBottom: '15px' }}>{message}</div>}
+      {message && <div style={{ color: 'white', backgroundColor: '#6366F1', padding: '10px', marginBottom: '15px' }}>{message}</div>}
       {errorMsg && <div style={{ color: 'white', backgroundColor: 'red', padding: '10px', marginBottom: '15px' }}>{errorMsg}</div>}
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -71,7 +71,7 @@ const ResetPasswordPage = () => {
           <p style={{ color: 'red', margin: '5px 0 0 0', fontSize: '14px' }}>{errors.confirmPassword?.message}</p>
         </div>
 
-        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           Guardar Contraseña
         </button>
       </form>

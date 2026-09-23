@@ -239,7 +239,7 @@ export const EventoFormModal: React.FC<EventoFormModalProps> = ({
             onClick={onClose}
             style={{
               padding: "8px 16px",
-              backgroundColor: "#6c757d",
+              backgroundColor: "#6b7280",
               color: "#ffffff",
               border: "none",
               borderRadius: "4px",
@@ -254,7 +254,7 @@ export const EventoFormModal: React.FC<EventoFormModalProps> = ({
             disabled={loading}
             style={{
               padding: "8px 20px",
-              backgroundColor: eventoEditar ? "#007BFF" : "#28a745",
+              backgroundColor: "#6366F1",
               color: "#ffffff",
               border: "none",
               borderRadius: "4px",

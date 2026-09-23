@@ -1,16 +1,16 @@
 :root {
   /* PALETA GENERAL DEL SISTEMA */
-  --color-bg: #0b0c15;
-  --color-bg-elevated: #12131f;
-  --color-surface: #171827;
+  --color-bg: #f5f5f7;
+  --color-bg-elevated: #f1f1f4;
+  --color-surface: #ffffff;
 
-  --color-primary: #2410c9;
-  --color-primary-hover: #321be0;
+  --color-primary: #6366F1;
+  --color-primary-hover: #4F46E5;
 
-  --color-text: #f1ede5;
-  --color-text-dim: #b8b2a8;
+  --color-text: #111827;
+  --color-text-dim: #6b7280;
 
-  --color-border: #45446b;
+  --color-border: #e5e7eb;
 
   --color-success: #46994d;
   --color-warning: #d98200;
@@ -29,7 +29,7 @@
 
   font-family: var(--sans);
 
-  color-scheme: dark;
+  color-scheme: light;
   color: var(--color-text);
   background: var(--color-bg);
 
@@ -60,9 +60,7 @@ body {
 }
 
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  
 
 
 body {

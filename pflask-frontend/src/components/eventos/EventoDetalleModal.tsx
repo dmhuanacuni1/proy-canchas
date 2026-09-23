@@ -65,7 +65,7 @@ export const EventoDetalleModal: React.FC<EventoDetalleModalProps> = ({ evento, 
             onClick={onClose}
             style={{
               padding: "8px 20px",
-              backgroundColor: "#6c757d",
+              backgroundColor: "#6b7280",
               color: "#ffffff",
               border: "none",
               borderRadius: "4px",

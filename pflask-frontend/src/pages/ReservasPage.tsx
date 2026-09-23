@@ -906,10 +906,10 @@ function ReservasPage() {
             <button className="btn-primary" onClick={abrirModalReservaPresencial}>➕ Reserva Presencial</button>
             <button className="btn-success" onClick={abrirModalRegistrarCliente}>👤 Registrar Cliente</button>
             <button className="btn-warning" onClick={abrirModalBloqueo}>🔒 Bloquear Cancha</button>
-            <button className={verGestionCanchas ? "btn-secondary" : "btn-primary"} onClick={() => setVerGestionCanchas(!verGestionCanchas)} style={{ background: verGestionCanchas ? "#555" : "#4caf50" }}>
+            <button className={verGestionCanchas ? "btn-secondary" : "btn-primary"} onClick={() => setVerGestionCanchas(!verGestionCanchas)} style={{ background: verGestionCanchas ? "#6b7280" : "#6366F1" }}>
               🏟️ {verGestionCanchas ? "Ocultar Canchas" : "Gestionar Canchas"}
             </button>
-            <button className={verGestionCategorias ? "btn-secondary" : "btn-primary"} onClick={() => setVerGestionCategorias(!verGestionCategorias)} style={{ background: verGestionCategorias ? "#555" : "#ff9800" }}>
+            <button className={verGestionCategorias ? "btn-secondary" : "btn-primary"} onClick={() => setVerGestionCategorias(!verGestionCategorias)} style={{ background: verGestionCategorias ? "#6b7280" : "#6366F1" }}>
               🏷️ {verGestionCategorias ? "Ocultar Categorías" : "Categorías"}
             </button>
           </div>

@@ -64,7 +64,7 @@ export const TablaEventosAdmin: React.FC<TablaEventosAdminProps> = ({ eventos, o
                       onClick={() => onEditar(e)}
                       style={{
                         padding: "5px 12px",
-                        backgroundColor: "#007BFF",
+                        backgroundColor: "#6366F1",
                         color: "#fff",
                         border: "none",
                         borderRadius: "4px",

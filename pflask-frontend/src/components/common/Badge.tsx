@@ -7,11 +7,11 @@ interface BadgeProps {
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = "neutral" }) => {
   const styles: Record<string, { bg: string; color: string; border: string }> = {
-    primary: { bg: "rgba(0, 123, 255, 0.18)", color: "#66b0ff", border: "1px solid rgba(0, 123, 255, 0.4)" },
-    success: { bg: "rgba(40, 167, 69, 0.18)", color: "#5dd879", border: "1px solid rgba(40, 167, 69, 0.4)" },
-    warning: { bg: "rgba(255, 193, 7, 0.18)", color: "#ffd54f", border: "1px solid rgba(255, 193, 7, 0.4)" },
-    info: { bg: "rgba(23, 162, 184, 0.18)", color: "#4dd0e1", border: "1px solid rgba(23, 162, 184, 0.4)" },
-    neutral: { bg: "var(--code-bg, #1f2028)", color: "var(--text, #9ca3af)", border: "1px solid var(--border, #2e303a)" },
+    primary: { bg: "rgba(99, 102, 241, 0.12)", color: "#4338CA", border: "1px solid rgba(99, 102, 241, 0.4)" },
+    success: { bg: "rgba(22, 163, 74, 0.12)", color: "#15803D", border: "1px solid rgba(22, 163, 74, 0.4)" },
+    warning: { bg: "rgba(202, 138, 4, 0.12)", color: "#A16207", border: "1px solid rgba(202, 138, 4, 0.4)" },
+    info: { bg: "rgba(37, 99, 235, 0.12)", color: "#1D4ED8", border: "1px solid rgba(37, 99, 235, 0.4)" },
+    neutral: { bg: "#f1f1f4", color: "#6b7280", border: "1px solid #e5e7eb" },
   };
 
   const current = styles[variant] || styles.neutral;

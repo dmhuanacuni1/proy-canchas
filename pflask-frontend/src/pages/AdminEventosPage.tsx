@@ -169,7 +169,7 @@ export const AdminEventosPage: React.FC<AdminEventosPageProps> = (props) => {
             style={{
               padding: "12px",
               backgroundColor: "rgba(220, 53, 69, 0.15)",
-              color: "#ff7b84",
+              color: "#c62828",
               border: "1px solid rgba(220, 53, 69, 0.5)",
               borderRadius: "6px",
               marginBottom: "15px",

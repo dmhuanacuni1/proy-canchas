@@ -147,7 +147,7 @@ const DashboardPage = () => {
           onClick={() => navigate("/eventos")}
           style={{
             padding: "12px 24px",
-            backgroundColor: "#17a2b8",
+            backgroundColor: "#6366F1",
             color: "white",
             border: "none",
             borderRadius: "6px",
@@ -164,7 +164,7 @@ const DashboardPage = () => {
             onClick={() => navigate("/reservas")}
             style={{
               padding: "12px 24px",
-              backgroundColor: "#007BFF",
+              backgroundColor: "#6366F1",
               color: "white",
               border: "none",
               borderRadius: "6px",
@@ -182,7 +182,7 @@ const DashboardPage = () => {
             onClick={() => navigate("/reservas")}
             style={{
               padding: "12px 24px",
-              backgroundColor: "#28a745",
+              backgroundColor: "#6366F1",
               color: "white",
               border: "none",
               borderRadius: "6px",
@@ -201,7 +201,7 @@ const DashboardPage = () => {
               onClick={() => navigate("/reservas")}
               style={{
                 padding: "12px 24px",
-                backgroundColor: "#007BFF",
+                backgroundColor: "#6366F1",
                 color: "white",
                 border: "none",
                 borderRadius: "6px",
@@ -216,7 +216,7 @@ const DashboardPage = () => {
               onClick={() => navigate("/admin/eventos")}
               style={{
                 padding: "12px 24px",
-                backgroundColor: "#28a745",
+                backgroundColor: "#6366F1",
                 color: "white",
                 border: "none",
                 borderRadius: "6px",
@@ -236,7 +236,7 @@ const DashboardPage = () => {
               }}
               style={{
                 padding: "12px 24px",
-                backgroundColor: "#6f42c1",
+                backgroundColor: "#6366F1",
                 color: "white",
                 border: "none",
                 borderRadius: "6px",
@@ -293,7 +293,7 @@ const DashboardPage = () => {
             <div
               style={{
                 color: "white",
-                backgroundColor: "#28a745",
+                backgroundColor: "#6366F1",
                 padding: "10px",
                 marginBottom: "15px",
               }}
@@ -338,7 +338,7 @@ const DashboardPage = () => {
                     key={u.id}
                     style={
                       editing?.id === u.id
-                        ? { backgroundColor: "#eaf4ff" }
+                        ? { backgroundColor: "#ede9fe" }
                         : undefined
                     }
                   >
@@ -361,7 +361,7 @@ const DashboardPage = () => {
                       <button
                         onClick={() => handleEditar(u)}
                         style={{
-                          backgroundColor: "#007BFF",
+                          backgroundColor: "#6366F1",
                           color: "white",
                           border: "none",
                           padding: "5px 10px",
@@ -396,7 +396,7 @@ const DashboardPage = () => {
                       padding: "10px",
                       border: "1px solid #ddd",
                       textAlign: "center",
-                      color: "#555",
+                      color: "#6b7280",
                     }}
                   >
                     No hay usuarios para mostrar o esperando respuesta del
@@ -515,7 +515,7 @@ const DashboardPage = () => {
                 disabled={saving}
                 style={{
                   padding: "10px 16px",
-                  backgroundColor: "#28a745",
+                  backgroundColor: "#6366F1",
                   color: "white",
                   border: "none",
                   borderRadius: "4px",
@@ -533,7 +533,7 @@ const DashboardPage = () => {
                 }}
                 style={{
                   padding: "10px 16px",
-                  backgroundColor: "#6c757d",
+                  backgroundColor: "#6b7280",
                   color: "white",
                   border: "none",
                   borderRadius: "4px",
