@@ -3,19 +3,16 @@ import { createContext, useState, useContext } from 'react';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // SOLUCIÓN: Leemos el localStorage directamente desde el inicio (Lazy initialization)
   const [user, setUser] = useState(() => {
+    const userData = localStorage.getItem('userData');
+    if (userData) return JSON.parse(userData);
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    
-    // Si encuentra datos guardados, los carga al instante. Si no, inicia en null.
-    if (token && role) {
-      return { token, role };
-    }
-    return null;
+    return token && role ? { token, role } : null;
   });
 
   const login = (userData) => {
+    localStorage.setItem('userData', JSON.stringify(userData));
     localStorage.setItem('token', userData.token);
     localStorage.setItem('role', userData.role);
     setUser(userData);
@@ -24,6 +21,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('userData');
     setUser(null);
   };
 

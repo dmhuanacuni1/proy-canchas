@@ -4,6 +4,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ReservasPage from './pages/ReservasPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import UsuarioEventosPage from './pages/UsuarioEventosPage';
 import AdminEventosPage from './pages/AdminEventosPage';
@@ -11,46 +12,62 @@ import AdminEventosPage from './pages/AdminEventosPage';
 function App() {
   return (
     <Routes>
-      {/* Si entran a la raíz, los mandamos al login */}
+      {/* Redirección raíz */}
       <Route path="/" element={<Navigate to="/login" replace />} />
-      
-      {/* Ruta pública */}
+
+      {/* Rutas públicas */}
       <Route path="/login" element={<LoginPage />} />
-
       <Route path="/register" element={<RegisterPage />} />
-
-      {/* Ruta pública para solicitar recuperación */}
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
-      {/* Rutas del Módulo de Eventos y Servicios Sociales */}
-      <Route path="/eventos" element={<UsuarioEventosPage />} />
-      <Route 
-        path="/admin/eventos" 
-        element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <AdminEventosPage />
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Ruta protegida: Solo accesible si hay sesión iniciada */}
-      <Route 
-        path="/dashboard" 
+      {/* Dashboard principal */}
+      <Route
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <DashboardPage />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/admin-dashboard" 
+
+      {/* Módulo de Eventos y Servicios Sociales */}
+      <Route
+        path="/eventos"
+        element={
+          <ProtectedRoute>
+            <UsuarioEventosPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/eventos"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
+            <AdminEventosPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Reservas */}
+      <Route
+        path="/reservas"
+        element={
+          <ProtectedRoute>
+            <ReservasPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Gestión de usuarios */}
+      <Route
+        path="/usuarios"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'administrador']}>
             <DashboardPage />
           </ProtectedRoute>
-        } 
+        }
       />
     </Routes>
   );
