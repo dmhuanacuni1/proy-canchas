@@ -113,10 +113,17 @@ def _encontrar_choque(id_cancha, fecha, hora_inicio, hora_fin, excluir_id=None):
 
 
 def _validaciones_reserva(fecha_reserva, hora_inicio, hora_fin, duracion_h=None, id_cancha=None):
-    hoy = datetime.now().date()
+    ahora = datetime.now()
+    hoy = ahora.date()
+    if fecha_reserva < hoy:
+        raise ValueError("No se pueden realizar reservas en fechas anteriores a la actual.")
+    if fecha_reserva == hoy and hora_inicio <= ahora.time():
+        h_actual = ahora.strftime("%H:%M")
+        raise ValueError(f"No se pueden realizar reservas en una hora que ya ha transcurrido (hora actual: {h_actual}).")
+
     dias = (fecha_reserva - hoy).days
-    if dias < 1 or dias > 15:
-        raise ValueError("La fecha debe estar entre 1 y 15 días de anticipación.")
+    if dias < 0 or dias > 15:
+        raise ValueError("La fecha debe estar dentro de los próximos 15 días.")
 
     if hora_fin <= hora_inicio:
         raise ValueError("La hora fin debe ser mayor que la hora inicio.")
