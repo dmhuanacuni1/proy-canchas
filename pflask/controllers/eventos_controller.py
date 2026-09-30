@@ -34,7 +34,7 @@ def get_evento(id_evento):
         return jsonify({"error": "Error al consultar el evento", "detalle": str(ex)}), 500
 
 @eventos_bp.route("", methods=["POST"])
-@require_auth(roles=["administrador"])
+@require_auth(roles=["administrador", "empleado"])
 def create_evento():
     try:
         data = request.get_json()
@@ -77,4 +77,3 @@ def delete_evento(id_evento):
         return jsonify({"mensaje": "Evento eliminado exitosamente"}), 200
     except Exception as ex:
         return jsonify({"error": "Error al eliminar el evento", "detalle": str(ex)}), 500
-

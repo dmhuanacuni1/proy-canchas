@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from "react";
 import type { Evento, CreateEventoDTO } from "../../types/evento.types";
 import { Modal } from "../common/Modal";
+import { api } from "../../services/api";
+
+interface CanchaOption {
+  id?: number;
+  id_cancha?: number;
+  nombre?: string;
+  nombre_cancha?: string;
+  deporte?: string;
+  tipo_deporte?: string;
+  estado?: string;
+}
 
 interface EventoFormModalProps {
   isOpen: boolean;
@@ -29,6 +40,35 @@ export const EventoFormModal: React.FC<EventoFormModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canchas, setCanchas] = useState<CanchaOption[]>([]);
+  const [cargandoCanchas, setCargandoCanchas] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCargandoCanchas(true);
+      api
+        .get<CanchaOption[]>("/canchas")
+        .then((res: { data: CanchaOption[] }) => {
+          if (Array.isArray(res.data)) {
+            setCanchas(res.data);
+            if (!eventoEditar && res.data.length > 0) {
+              const canchaOperativa = res.data.find(
+                (c) => c.estado !== "fuera_servicio" && c.estado !== "mantenimiento"
+              );
+              const idSeleccionado = canchaOperativa
+                ? (canchaOperativa.id_cancha ?? canchaOperativa.id ?? 1)
+                : (res.data[0].id_cancha ?? res.data[0].id ?? 1);
+              setFormData((prev) => ({
+                ...prev,
+                id_cancha: idSeleccionado,
+              }));
+            }
+          }
+        })
+        .catch((err: unknown) => console.error("Error al cargar las canchas:", err))
+        .finally(() => setCargandoCanchas(false));
+    }
+  }, [isOpen, eventoEditar]);
 
   useEffect(() => {
     if (eventoEditar) {
@@ -53,7 +93,7 @@ export const EventoFormModal: React.FC<EventoFormModalProps> = ({
         cupo_maximo: 20,
         organizador: "",
         descripcion: "",
-        id_cancha: 1,
+        id_cancha: canchas.length > 0 ? (canchas[0].id_cancha ?? canchas[0].id ?? 1) : 1,
       });
     }
     setError(null);
@@ -185,16 +225,34 @@ export const EventoFormModal: React.FC<EventoFormModalProps> = ({
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           <div>
-            <label style={labelStyle}>ID Cancha *</label>
-            <input
-              type="number"
+            <label style={labelStyle}>Cancha Asignada *</label>
+            <select
               name="id_cancha"
               value={formData.id_cancha}
               onChange={handleChange}
               required
-              min={1}
+              disabled={cargandoCanchas}
               style={inputStyle}
-            />
+            >
+              {canchas.length === 0 ? (
+                <option value={formData.id_cancha}>
+                  {cargandoCanchas ? "Cargando canchas..." : `Cancha #${formData.id_cancha}`}
+                </option>
+              ) : (
+                canchas.map((c) => {
+                  const id = c.id_cancha ?? c.id ?? 1;
+                  const nombre = c.nombre_cancha ?? c.nombre ?? `Cancha #${id}`;
+                  const deporte = c.tipo_deporte ?? c.deporte ?? "";
+                  const noOperativa = c.estado === "fuera_servicio" || c.estado === "mantenimiento";
+                  const estadoTag = c.estado === "fuera_servicio" ? " [Fuera de servicio]" : c.estado === "mantenimiento" ? " [En mantenimiento]" : "";
+                  return (
+                    <option key={id} value={id} disabled={noOperativa}>
+                      {nombre} {deporte ? `(${deporte})` : ""}{estadoTag}
+                    </option>
+                  );
+                })
+              )}
+            </select>
           </div>
 
           <div>

@@ -1,4 +1,6 @@
 from datetime import datetime, date
+from extensions import db
+from sqlalchemy import text
 
 class EventoValidator:
     @staticmethod
@@ -23,12 +25,15 @@ class EventoValidator:
         except ValueError:
             errors.append("El formato de 'fecha_evento' debe ser YYYY-MM-DD.")
 
-        # Validar horas (HH:MM)
+        # Validar horas (HH:MM) y que no hayan transcurrido hoy
         try:
-            h_inicio = datetime.strptime(data["hora_inicio"], "%H:%M")
-            h_fin = datetime.strptime(data["hora_fin"], "%H:%M")
+            h_inicio = datetime.strptime(data["hora_inicio"], "%H:%M").time()
+            h_fin = datetime.strptime(data["hora_fin"], "%H:%M").time()
             if h_fin <= h_inicio:
                 errors.append("La hora de fin debe ser estrictamente posterior a la hora de inicio.")
+            elif "fecha" in locals() and fecha == date.today() and h_inicio <= datetime.now().time():
+                h_actual = datetime.now().strftime("%H:%M")
+                errors.append(f"La hora de inicio ({data['hora_inicio']}) ya ha transcurrido para la fecha de hoy (hora actual: {h_actual}).")
         except ValueError:
             errors.append("Las horas deben tener formato militar HH:MM (ej. 14:30).")
 
@@ -41,9 +46,19 @@ class EventoValidator:
             except (ValueError, TypeError):
                 errors.append("El cupo máximo debe ser un número entero.")
 
-        # Validar id_cancha
+        # Validar existencia y operatividad de id_cancha (RF3 & RF4)
         try:
-            int(data["id_cancha"])
+            id_cancha = int(data["id_cancha"])
+            cancha_info = db.session.execute(
+                text("SELECT nombre_cancha, estado FROM cancha WHERE id_cancha = :id_cancha"),
+                {"id_cancha": id_cancha}
+            ).fetchone()
+            if not cancha_info:
+                errors.append(f"La cancha seleccionada (ID {id_cancha}) no existe.")
+            elif cancha_info[1] == "fuera_servicio":
+                errors.append(f"La cancha '{cancha_info[0]}' se encuentra fuera de servicio y no puede recibir eventos.")
+            elif cancha_info[1] == "mantenimiento":
+                errors.append(f"La cancha '{cancha_info[0]}' se encuentra en mantenimiento y no puede recibir eventos.")
         except (ValueError, TypeError):
             errors.append("El identificador 'id_cancha' debe ser un número entero.")
 
@@ -67,10 +82,13 @@ class EventoValidator:
 
         if "hora_inicio" in data and "hora_fin" in data:
             try:
-                h_inicio = datetime.strptime(data["hora_inicio"], "%H:%M")
-                h_fin = datetime.strptime(data["hora_fin"], "%H:%M")
+                h_inicio = datetime.strptime(data["hora_inicio"], "%H:%M").time()
+                h_fin = datetime.strptime(data["hora_fin"], "%H:%M").time()
                 if h_fin <= h_inicio:
                     errors.append("La hora de fin debe ser estrictamente posterior a la hora de inicio.")
+                elif "fecha" in locals() and fecha == date.today() and h_inicio <= datetime.now().time():
+                    h_actual = datetime.now().strftime("%H:%M")
+                    errors.append(f"La hora de inicio ({data['hora_inicio']}) ya ha transcurrido para la fecha de hoy (hora actual: {h_actual}).")
             except ValueError:
                 errors.append("Las horas deben tener formato militar HH:MM (ej. 14:30).")
 
@@ -84,7 +102,17 @@ class EventoValidator:
 
         if "id_cancha" in data and data["id_cancha"] is not None:
             try:
-                int(data["id_cancha"])
+                id_cancha = int(data["id_cancha"])
+                cancha_info = db.session.execute(
+                    text("SELECT nombre_cancha, estado FROM cancha WHERE id_cancha = :id_cancha"),
+                    {"id_cancha": id_cancha}
+                ).fetchone()
+                if not cancha_info:
+                    errors.append(f"La cancha seleccionada (ID {id_cancha}) no existe.")
+                elif cancha_info[1] == "fuera_servicio":
+                    errors.append(f"La cancha '{cancha_info[0]}' se encuentra fuera de servicio y no puede recibir eventos.")
+                elif cancha_info[1] == "mantenimiento":
+                    errors.append(f"La cancha '{cancha_info[0]}' se encuentra en mantenimiento y no puede recibir eventos.")
             except (ValueError, TypeError):
                 errors.append("El identificador 'id_cancha' debe ser un número entero.")
 
