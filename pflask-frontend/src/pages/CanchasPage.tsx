@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../services/api";
+import { api } from "../services/api";
 
 interface Cancha {
   id: number;
@@ -19,7 +19,7 @@ function CanchasPage() {
   useEffect(() => {
     api
       .get<Cancha[]>("/canchas")
-      .then((res) => setCanchas(res.data))
+      .then((res: { data: Cancha[] }) => setCanchas(res.data))
       .catch(() => setError("No se pudo conectar con el backend. ¿Está corriendo Flask?"))
       .finally(() => setCargando(false));
   }, []);

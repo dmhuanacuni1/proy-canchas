@@ -6,7 +6,7 @@ from flask import current_app, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from extensions import db
-from .models import Usuario
+from models.usuario import Usuario
 
 ROLE_TO_FRONTEND = {
     "administrador": "admin",

@@ -93,14 +93,14 @@ export const EventoFormModal: React.FC<EventoFormModalProps> = ({
     }
   };
 
-  const labelStyle = { display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: 600, color: "var(--text-h, #f3f4f6)" };
+  const labelStyle = { display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: 600, color: "var(--color-text, #111827)" };
   const inputStyle = {
     width: "100%",
     padding: "8px 10px",
-    borderRadius: "4px",
-    border: "1px solid var(--border, #2e303a)",
-    backgroundColor: "var(--bg, #16171d)",
-    color: "var(--text-h, #f3f4f6)",
+    borderRadius: "6px",
+    border: "1px solid var(--color-border, #e5e7eb)",
+    backgroundColor: "var(--color-bg-elevated, #f1f1f4)",
+    color: "var(--color-text, #111827)",
     boxSizing: "border-box" as const,
     fontSize: "14px",
   };
@@ -237,31 +237,14 @@ export const EventoFormModal: React.FC<EventoFormModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#6b7280",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
+            className="btn-secondary"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={loading}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: "#6366F1",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "4px",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
+            className="btn-primary"
           >
             {loading ? "Guardando..." : eventoEditar ? "Actualizar Evento" : "Crear Evento"}
           </button>

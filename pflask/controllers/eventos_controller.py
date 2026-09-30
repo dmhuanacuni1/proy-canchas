@@ -4,7 +4,7 @@ from validators.evento_validator import EventoValidator
 
 # Integración con el sistema de autenticación y roles
 try:
-    from auth.security import require_auth
+    from services.auth_service import require_auth
 except ImportError:
     # Fallback transparente para desarrollo aislado si auth no está en la misma ruta
     def require_auth(roles=None):

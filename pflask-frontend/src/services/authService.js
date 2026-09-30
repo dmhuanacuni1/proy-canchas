@@ -44,6 +44,10 @@ export const authService = {
     return response.data;
   },
 
+  crearUsuario: async (userData) => {
+    return authService.registro(userData);
+  },
+
   actualizarUsuario: async (id, userData) => {
     const response = await axiosClient.put(`/admin/users/${id}`, userData);
     return response.data;

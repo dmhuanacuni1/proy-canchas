@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../services/api";
+import { api } from "../services/api";
 
 interface Reserva {
   id: number;
@@ -24,7 +24,7 @@ function MisReservasPage() {
     setCargando(true);
     api
       .get<Reserva[]>("/reservas/historial")
-      .then((res) => setReservas(res.data))
+      .then((res: { data: Reserva[] }) => setReservas(res.data))
       .catch(() => setError("Error al cargar el historial de reservas."))
       .finally(() => setCargando(false));
   };

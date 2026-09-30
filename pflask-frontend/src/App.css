@@ -195,6 +195,31 @@ body {
   border: 1px solid rgba(230, 57, 70, 0.4);
 }
 
+.badge.pendiente {
+  background: rgba(255, 152, 0, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(255, 152, 0, 0.4);
+}
+
+.badge.pagado {
+  background: rgba(76, 175, 80, 0.15);
+  color: var(--color-disponible);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.badge.reembolsado {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+.big-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-top: 6px;
+}
+
 /* ============================================
      FORMULARIO
      ============================================ */
@@ -601,6 +626,30 @@ tbody tr:hover {
   justify-content: center;
   padding: 20px;
   background: linear-gradient(135deg, #edf0ff 0%, #f5f5f7 100%);
+}
+
+.login-container .back-link {
+  position: fixed;
+  top: 16px;
+  left: 20px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.login-container .back-link:hover {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .login-card {
@@ -1144,4 +1193,58 @@ tbody tr:hover {
   .portal-registro-botones button {
     flex: 1;
   }
+}
+/* ============================================
+   ESTILOS NUEVOS DEL REDISEÑO (paleta índigo)
+   ============================================ */
+.login-logo {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 14px;
+  border-radius: 16px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4);
+}
+
+.login-card {
+  position: relative;
+}
+
+.login-card-wide {
+  max-width: 520px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-block {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.campo-error {
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.login-links {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-dim);
+}
+
+.login-links a {
+  color: var(--color-primary);
+  font-weight: 600;
 }

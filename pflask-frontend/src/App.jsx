@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ReservasPage from './pages/ReservasPage';
+import ReportesPage from './pages/ReportesPage';
+import PagosPage from './pages/PagosPage.tsx';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import UsuarioEventosPage from './pages/UsuarioEventosPage';
 import AdminEventosPage from './pages/AdminEventosPage';
@@ -84,6 +86,23 @@ function App() {
       />
 
       {/* ============================================
+          REPORTES (solo admin)
+          ============================================ */}
+      <Route
+        path="/reportes"
+        element={
+          <ProtectedRoute
+            allowedRoles={[
+              'admin',
+              'administrador'
+            ]}
+          >
+            <ReportesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============================================
           RESERVAS
           ============================================ */}
       <Route
@@ -108,6 +127,24 @@ function App() {
             ]}
           >
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+    {/* ============================================
+          PAGOS
+          ============================================ */}
+      <Route
+        path="/pagos"
+        element={
+          <ProtectedRoute
+            allowedRoles={[
+              'admin',
+              'administrador',
+              'empleado'
+            ]}
+          >
+            <PagosPage />
           </ProtectedRoute>
         }
       />

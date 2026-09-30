@@ -1,89 +1,181 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { authService } from '../services/authService';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { Link } from "react-router-dom";
 
-const schema = yup.object().shape({
-  nombre: yup.string().required('El nombre es obligatorio'),
-  email: yup.string().email('Debe ser un correo válido').required('El correo es obligatorio'),
-  password: yup.string()
-    .required('La contraseña es obligatoria')
-    .min(8, 'Debe tener al menos 8 caracteres')
-    .matches(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
-    .matches(/[!@#$%^&*(),.?":{}|<>]/, 'Debe contener al menos un símbolo'),
-  confirmPassword: yup.string()
-    .required('Debes confirmar tu contraseña')
-    .oneOf([yup.ref('password')], 'Las contraseñas no coinciden')
-});
+import { authService } from "../services/authService";
+
+const schema = yup
+  .object({
+    nombre: yup.string().required("El nombre es obligatorio."),
+    apellido: yup.string().required("El apellido es obligatorio."),
+    ci: yup.string().required("El CI es obligatorio."),
+    celular: yup.string().required("El celular es obligatorio."),
+    email: yup
+      .string()
+      .required("El correo es obligatorio.")
+      .email("Debe ser un correo válido."),
+    username: yup.string().required("El nombre de usuario es obligatorio."),
+    password: yup
+      .string()
+      .required("La contraseña es obligatoria.")
+      .min(8, "Mínimo 8 caracteres.")
+      .matches(/[A-Z]/, "Debe tener una mayúscula.")
+      .matches(/[^A-Za-z0-9]/, "Debe tener un símbolo."),
+    confirmPassword: yup
+      .string()
+      .oneOf([yup.ref("password")], "Las contraseñas no coinciden.")
+      .required("Confirma la contraseña."),
+  })
+  .required();
 
 const RegisterPage = () => {
-  const [message, setMessage] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({ resolver: yupResolver(schema) });
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: yupResolver(schema)
-  });
+  const [message, setMessage] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const onSubmit = async (data) => {
+    setMessage("");
+    setErrorMsg("");
     try {
-      setMessage('');
-      setErrorMsg('');
-      
-      // Enviamos los datos (menos confirmPassword, que solo sirve para el frontend)
-      const userData = { nombre: data.nombre, email: data.email, password: data.password };
-      await authService.registro(userData);
-      
-      setMessage('¡Cuenta creada exitosamente! Redirigiendo al login...');
-      setTimeout(() => navigate('/login'), 3000);
+      await authService.registro(data);
+      setMessage(
+        "¡Cuenta creada exitosamente! Serás redirigido al inicio de sesión...",
+      );
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 3000);
     } catch (error) {
-      setErrorMsg('Error al registrar el usuario. Intenta con otro correo.');
+      setErrorMsg(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "No se pudo crear la cuenta. Verifica el servidor backend.",
+      );
     }
   };
 
   return (
-    <div style={{ padding: '30px', maxWidth: '400px', margin: '40px auto', fontFamily: 'sans-serif', border: '1px solid #ccc', borderRadius: '8px' }}>
-      <h2>Crear una Cuenta</h2>
-
-      {message && <div style={{ color: 'white', backgroundColor: '#6366F1', padding: '10px', marginBottom: '15px' }}>{message}</div>}
-      {errorMsg && <div style={{ color: 'white', backgroundColor: 'red', padding: '10px', marginBottom: '15px' }}>{errorMsg}</div>}
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Nombre Completo:</label><br />
-          <input type="text" {...register('nombre')} style={{ width: '95%', padding: '8px', marginTop: '5px' }} />
-          <p style={{ color: 'red', margin: '5px 0 0 0', fontSize: '14px' }}>{errors.nombre?.message}</p>
+    <div className="login-container">
+      <Link to="/login" className="back-link">← Volver</Link>
+      <div className="login-card login-card-wide">
+        <div className="login-header">
+          <div className="login-logo">C</div>
+          <h1>Crear cuenta</h1>
+          <p>Regístrate para reservar canchas</p>
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Correo Electrónico:</label><br />
-          <input type="email" {...register('email')} style={{ width: '95%', padding: '8px', marginTop: '5px' }} />
-          <p style={{ color: 'red', margin: '5px 0 0 0', fontSize: '14px' }}>{errors.email?.message}</p>
-        </div>
+        {errorMsg && <div className="mensaje error">{errorMsg}</div>}
+        {message && <div className="mensaje success">{message}</div>}
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Contraseña:</label><br />
-          <input type="password" {...register('password')} style={{ width: '95%', padding: '8px', marginTop: '5px' }} />
-          <p style={{ color: 'red', margin: '5px 0 0 0', fontSize: '14px' }}>{errors.password?.message}</p>
-        </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Nombre</label>
+              <input type="text" placeholder="Juan" {...register("nombre")} />
+              {errors.nombre && (
+                <span className="campo-error">{errors.nombre.message}</span>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Apellido</label>
+              <input
+                type="text"
+                placeholder="Pérez"
+                {...register("apellido")}
+              />
+              {errors.apellido && (
+                <span className="campo-error">{errors.apellido.message}</span>
+              )}
+            </div>
+          </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label>Confirmar Contraseña:</label><br />
-          <input type="password" {...register('confirmPassword')} style={{ width: '95%', padding: '8px', marginTop: '5px' }} />
-          <p style={{ color: 'red', margin: '5px 0 0 0', fontSize: '14px' }}>{errors.confirmPassword?.message}</p>
-        </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>CI</label>
+              <input type="text" placeholder="1234567" {...register("ci")} />
+              {errors.ci && (
+                <span className="campo-error">{errors.ci.message}</span>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Celular</label>
+              <input
+                type="text"
+                placeholder="+591 70000000"
+                {...register("celular")}
+              />
+              {errors.celular && (
+                <span className="campo-error">{errors.celular.message}</span>
+              )}
+            </div>
+          </div>
 
-        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          Registrarse
-        </button>
-      </form>
-      
-      <div style={{ textAlign: 'center', marginTop: '15px' }}>
-        <Link to="/login" style={{ color: '#6366F1', textDecoration: 'none', fontSize: '14px' }}>
-          ¿Ya tienes cuenta? Inicia sesión
-        </Link>
+          <div className="form-group">
+            <label>Correo</label>
+            <input
+              type="email"
+              placeholder="correo@ejemplo.com"
+              {...register("email")}
+            />
+            {errors.email && (
+              <span className="campo-error">{errors.email.message}</span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>Nombre de usuario</label>
+            <input
+              type="text"
+              placeholder="juanp123"
+              {...register("username")}
+            />
+            {errors.username && (
+              <span className="campo-error">{errors.username.message}</span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>Contraseña</label>
+            <input
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              {...register("password")}
+            />
+            {errors.password && (
+              <span className="campo-error">{errors.password.message}</span>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>Confirmar contraseña</label>
+            <input
+              type="password"
+              placeholder="Repite la contraseña"
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword && (
+              <span className="campo-error">
+                {errors.confirmPassword.message}
+              </span>
+            )}
+          </div>
+
+          <button type="submit" className="btn-primary btn-block">
+            Crear cuenta
+          </button>
+        </form>
+
+        <div className="login-links">
+          <p>
+            ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

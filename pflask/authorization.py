@@ -1,4 +1,4 @@
-from functools import wraps
+﻿from functools import wraps
 from flask import jsonify
 
 
@@ -119,7 +119,7 @@ def obtener_rol_actual():
     Punto de integración con JWT.
 
     Esta función será conectada posteriormente con
-    auth.security.require_auth().
+    services.auth_service.require_auth().
     """
 
     raise RuntimeError(

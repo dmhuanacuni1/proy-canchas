@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import axios from "axios";
 import "../App.css";
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { AppLayout } from '../components/layout/AppLayout';
 
 // ============================================================
 // INTERFACES
@@ -72,8 +72,7 @@ const DURACIONES_COMUNES = [1, 1.5, 2, 2.5, 3, 4];
 // COMPONENTE
 // ============================================================
 function ReservasPage() {
-  const navigate = useNavigate();
-  const { user, logout: authLogout } = useAuth();
+  const { user } = useAuth();
 
   // Mapeamos el usuario del AuthContext al formato que usaba el componente
   const usuario = useMemo(() => {
@@ -119,8 +118,8 @@ function ReservasPage() {
     texto: string;
     tipo: "success" | "error" | "info";
   } | null>(null);
-  const [reservas, setReservas] = useState<Reserva[]>([]);
-  const [filtroReservas, setFiltroReservas] = useState<"todas" | "vigentes">("todas");
+  const [, setReservas] = useState<Reserva[]>([]);
+  const [filtroReservas] = useState<"todas" | "vigentes">("todas");
   const [reservaPagando, setReservaPagando] = useState<Reserva | null>(null);
   const [metodoPago, setMetodoPago] = useState("efectivo");
 
@@ -307,12 +306,8 @@ function ReservasPage() {
   }, [usuario?.rol, filtroFecha, filtroEstado]);
 
   // ============================================================
-  // LOGOUT (usa el del AuthContext)
+  // HELPERS
   // ============================================================
-  const handleLogout = () => {
-    authLogout();
-    navigate('/login');
-  };
 
   // ============================================================
   // ACCIONES CLIENTE
@@ -371,6 +366,7 @@ function ReservasPage() {
       alert(`❌ ${err.response?.data?.error || "Error al cancelar."}`);
     }
   };
+  void cancelarReserva;
 
   const handlePagar = async (e: any) => {
     e.preventDefault();
@@ -705,23 +701,13 @@ function ReservasPage() {
   // ============================================================
   // RENDER
   // ============================================================
-  if (cargando) return <div className="cargando">Cargando canchas...</div>;
-  if (error) return <div className="app-container"><p className="mensaje error">{error}</p></div>;
+  if (cargando) return <AppLayout title="Reservas"><div className="cargando">Cargando canchas...</div></AppLayout>;
+  if (error) return <AppLayout title="Reservas"><div className="app-container"><p className="mensaje error">{error}</p></div></AppLayout>;
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <div className="header-top">
-          <h1>🏟️ Sistema de Gestión de Reservas</h1>
-          <div className="user-info">
-            <div className="user-details">
-              <span className="user-name">👤 {usuario?.nombre_completo}</span>
-              <span className={`rol-badge rol-${usuario?.rol}`}>{usuario?.rol}</span>
-            </div>
-            <button className="btn-secondary btn-sm" onClick={handleLogout}>Cerrar sesión</button>
-          </div>
-        </div>
-      </header>
+    <AppLayout title="Reservas">
+      <div className="app-container">
+
 
       {/* ===================== VISTA: CLIENTE ===================== */}
       {esCliente && (
@@ -1446,7 +1432,8 @@ function ReservasPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   );
 }
 

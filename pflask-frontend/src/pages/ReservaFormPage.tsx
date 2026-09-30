@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react"; // <--- Se importa como "type"
 import { useParams, useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
+import { api } from "../services/api";
 
 function ReservaFormPage() {
   const { idCancha } = useParams();

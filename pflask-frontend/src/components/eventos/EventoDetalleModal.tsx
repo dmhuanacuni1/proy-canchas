@@ -23,10 +23,10 @@ export const EventoDetalleModal: React.FC<EventoDetalleModalProps> = ({ evento, 
         </div>
 
         <div>
-          <h4 style={{ margin: "0 0 6px 0", color: "var(--text, #9ca3af)", fontSize: "0.85rem", textTransform: "uppercase" }}>
+          <h4 style={{ margin: "0 0 6px 0", color: "var(--color-text-dim, #6b7280)", fontSize: "0.85rem", textTransform: "uppercase" }}>
             Descripción
           </h4>
-          <p style={{ margin: 0, color: "var(--text-h, #f3f4f6)", lineHeight: 1.5, fontSize: "0.95rem" }}>
+          <p style={{ margin: 0, color: "var(--color-text, #111827)", lineHeight: 1.5, fontSize: "0.95rem" }}>
             {evento.descripcion || "No se ha proporcionado una descripción detallada para este evento."}
           </p>
         </div>
@@ -36,43 +36,35 @@ export const EventoDetalleModal: React.FC<EventoDetalleModalProps> = ({ evento, 
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gap: "12px",
-            backgroundColor: "var(--bg, #16171d)",
-            border: "1px solid var(--border, #2e303a)",
+            backgroundColor: "var(--color-bg-elevated, #f1f1f4)",
+            border: "1px solid var(--color-border, #e5e7eb)",
             padding: "15px",
-            borderRadius: "6px",
+            borderRadius: "8px",
           }}
         >
           <div>
-            <span style={{ color: "var(--text, #9ca3af)", fontSize: "0.8rem", display: "block" }}>Fecha</span>
-            <strong style={{ color: "var(--text-h, #f3f4f6)" }}>{evento.fecha_evento}</strong>
+            <span style={{ color: "var(--color-text-dim, #6b7280)", fontSize: "0.8rem", display: "block" }}>Fecha</span>
+            <strong style={{ color: "var(--color-text, #111827)" }}>{evento.fecha_evento}</strong>
           </div>
           <div>
-            <span style={{ color: "var(--text, #9ca3af)", fontSize: "0.8rem", display: "block" }}>Horario</span>
-            <strong style={{ color: "var(--text-h, #f3f4f6)" }}>{evento.hora_inicio} - {evento.hora_fin}</strong>
+            <span style={{ color: "var(--color-text-dim, #6b7280)", fontSize: "0.8rem", display: "block" }}>Horario</span>
+            <strong style={{ color: "var(--color-text, #111827)" }}>{evento.hora_inicio} - {evento.hora_fin}</strong>
           </div>
           <div>
-            <span style={{ color: "var(--text, #9ca3af)", fontSize: "0.8rem", display: "block" }}>Lugar / Cancha</span>
-            <strong style={{ color: "var(--text-h, #f3f4f6)" }}>{evento.nombre_cancha || `Cancha #${evento.id_cancha}`}</strong>
+            <span style={{ color: "var(--color-text-dim, #6b7280)", fontSize: "0.8rem", display: "block" }}>Lugar / Cancha</span>
+            <strong style={{ color: "var(--color-text, #111827)" }}>{evento.nombre_cancha || `Cancha #${evento.id_cancha}`}</strong>
           </div>
           <div>
-            <span style={{ color: "var(--text, #9ca3af)", fontSize: "0.8rem", display: "block" }}>Organizador</span>
-            <strong style={{ color: "var(--text-h, #f3f4f6)" }}>{evento.organizador || "Comunidad / Club"}</strong>
+            <span style={{ color: "var(--color-text-dim, #6b7280)", fontSize: "0.8rem", display: "block" }}>Organizador</span>
+            <strong style={{ color: "var(--color-text, #111827)" }}>{evento.organizador || "Comunidad / Club"}</strong>
           </div>
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
           <button
             onClick={onClose}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: "#6b7280",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "4px",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontSize: "0.9rem",
-            }}
+            className="btn-secondary"
+            style={{ padding: "8px 20px", borderRadius: "6px" }}
           >
             Cerrar
           </button>

@@ -48,15 +48,15 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
     >
       <div
         style={{
-          backgroundColor: "var(--code-bg, #1f2028)",
-          color: "var(--text-h, #f3f4f6)",
-          borderRadius: "8px",
+          backgroundColor: "var(--color-surface, #ffffff)",
+          color: "var(--color-text, #111827)",
+          borderRadius: "12px",
           width: "100%",
           maxWidth: "550px",
           maxHeight: "90vh",
           overflowY: "auto",
-          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.4)",
-          border: "1px solid var(--border, #2e303a)",
+          boxShadow: "var(--shadow-lg, 0 20px 60px rgba(17, 24, 39, 0.18))",
+          border: "1px solid var(--color-border, #e5e7eb)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -66,10 +66,10 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             justifyContent: "space-between",
             alignItems: "center",
             padding: "15px 20px",
-            borderBottom: "1px solid var(--border, #2e303a)",
+            borderBottom: "1px solid var(--color-border, #e5e7eb)",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 600, color: "var(--text-h, #f3f4f6)" }}>
+          <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 600, color: "var(--color-text, #111827)" }}>
             {title}
           </h3>
           <button
@@ -77,7 +77,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             style={{
               background: "none",
               border: "none",
-              color: "var(--text, #9ca3af)",
+              color: "var(--color-text-dim, #6b7280)",
               fontSize: "1.5rem",
               cursor: "pointer",
               lineHeight: 1,
